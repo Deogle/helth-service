@@ -1,0 +1,1 @@
+docker build -t helth-api:dev .
