@@ -137,6 +137,7 @@ const FirestoreDB = (() => {
   };
 
   const logFailedWebhook = async (url: string) => {
+    console.error(`Failed to push webhook to ${url}, logging failure`);
     const doc = await db.collection("webhooks").where("url", "==", url).get();
     await doc.docs?.[0]?.ref.update({
       lastFailure: FieldValue.serverTimestamp(),

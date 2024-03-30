@@ -15,9 +15,10 @@ const initializeServer = async (client: any) => {
     console.log("Webhook registered successfully at ", config.webhookUrl);
   } catch (error: AxiosError | any) {
     if (error.response.status === 304) {
-      return console.log("Webhook already registered at", config.webhookUrl);
+      console.log("Webhook already registered at", config.webhookUrl);
+    } else {
+      console.error(`Failed to register webhook: ${error.message}`);
     }
-    console.error(`Failed to register webhook: ${error.message}`);
   }
 
   app.post("/webhook", (req, res) => {
@@ -29,6 +30,9 @@ const initializeServer = async (client: any) => {
       client.onRecoveryUpdated(req.body);
       console.log(`Received recovery update for user ${req.body.email}`);
       return res.status(200).json({ message: "success" });
+    } else {
+      console.error("Received unknown event type", req.body.type);
+      return res.status(400).json({ message: "unknown event type" });
     }
   });
 

@@ -6,7 +6,6 @@ import dayjs from "dayjs";
 import DB from "../lib/db";
 import axios from "axios";
 import { FitbitWebhookData } from "../types/fitbit";
-import { WebhookTypes } from "../types/api";
 
 const webhookRouter = Router();
 
