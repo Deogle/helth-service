@@ -12,7 +12,11 @@ const initializeServer = async (client: any) => {
     await axios.post(`${config.apiUrl}/webhooks/register`, {
       url: config.webhookUrl,
     });
+    console.log("Webhook registered successfully at ", config.webhookUrl);
   } catch (error: AxiosError | any) {
+    if (error.response.status === 304) {
+      return console.log("Webhook already registered at", config.webhookUrl);
+    }
     console.error(`Failed to register webhook: ${error.message}`);
   }
 
