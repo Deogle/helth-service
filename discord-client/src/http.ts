@@ -32,7 +32,7 @@ const initializeServer = async (client: any) => {
     }
   });
 
-  app.get("/health", (req, res) => {
+  app.get("/health", (_, res) => {
     res.status(200).end();
   });
 
