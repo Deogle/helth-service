@@ -12,6 +12,7 @@ vite.config.ts.timestamp-*
 db.json
 helth-service-key.json
 *-key.json
+helth-service-key.json
 
 #infra
 *.pkg
