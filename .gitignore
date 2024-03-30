@@ -10,7 +10,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 db.json
-helth-alert-key.js
+helth-service-key.json
 
 #infra
 infra/.terraform.*

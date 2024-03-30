@@ -1,22 +1,44 @@
-import { initializeApp, cert } from "firebase-admin/app";
+import { initializeApp } from "firebase-admin/app";
+import admin from "firebase-admin";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
-import { WebhookTypes } from "../../types/api";
+import { readFileSync } from "fs";
 
 let initialized = false;
 
+const getServiceAccount = () => {
+  let serviceAccountKey;
+  try {
+    serviceAccountKey = JSON.parse(
+      readFileSync("helth-service-key.json", "utf-8")
+    );
+    return serviceAccountKey;
+  } catch (error) {
+    console.error(
+      "Service account key file not found. Falling back to environment variables."
+    );
+    const { GCLOUD_PROJECT_ID, GCLOUD_CLIENT_EMAIL, GCLOUD_PRIVATE_KEY } =
+      serviceAccountKey ?? process.env;
+
+    return {
+      projectId: GCLOUD_PROJECT_ID,
+      clientEmail: GCLOUD_CLIENT_EMAIL,
+      privateKey: GCLOUD_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    };
+  }
+};
+
+const initializeFirestoreAppCredentials = () => {
+  const serviceAccount = getServiceAccount();
+
+  initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+  initialized = true;
+};
+
 const FirestoreDB = (() => {
   if (!initialized) {
-    const { GCLOUD_PROJECT_ID, GCLOUD_CLIENT_EMAIL, GCLOUD_PRIVATE_KEY } =
-      process.env;
-
-    initializeApp({
-      credential: cert({
-        projectId: GCLOUD_PROJECT_ID,
-        clientEmail: GCLOUD_CLIENT_EMAIL,
-        privateKey: GCLOUD_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      }),
-    });
-    initialized = true;
+    initializeFirestoreAppCredentials();
   }
 
   const db = getFirestore();
@@ -60,10 +82,12 @@ const FirestoreDB = (() => {
         createdAt: Timestamp.now(),
         updatedAt: FieldValue.serverTimestamp(),
       });
+    return data;
   };
 
   const deleteUser = async (email: string) => {
     await db.collection("users").doc(email).delete();
+    return { email };
   };
 
   const getAllUsers = async () => {
