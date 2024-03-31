@@ -22,7 +22,11 @@ const loggerMiddleware = (
   next();
 };
 
-app.get("/health", (req, res) => {
+app.get("/", (_, res) => {
+  res.status(405).end();
+});
+
+app.get("/health", (_, res) => {
   res.status(200).end();
 });
 
