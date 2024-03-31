@@ -13,6 +13,9 @@ db.json
 helth-service-key.json
 
 #infra
-infra/.terraform.*
-infra/.terraform
-infra/terraform.tfstate*
+*.pkg
+.terraform.*
+.terraform
+terraform.tfstate*
+*.auto.tfvars
+*.tfvars
