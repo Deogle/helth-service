@@ -8,7 +8,7 @@ const initializeServer = async (client: any) => {
 
   //register this client with the server
   try {
-    console.log("Registering webhook with api");
+    console.log("Registering webhook with api", config.apiUrl);
     await axios.post(`${config.apiUrl}/webhooks/register`, {
       url: config.webhookUrl,
     });
