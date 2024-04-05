@@ -14,7 +14,7 @@ const initializeServer = async (client: any) => {
     });
     console.log("Webhook registered successfully at ", config.webhookUrl);
   } catch (error: AxiosError | any) {
-    if (error.response.status === 304) {
+    if (error.response?.status === 304) {
       console.log("Webhook already registered at", config.webhookUrl);
     } else {
       console.error(`Failed to register webhook: ${error.message}`);
