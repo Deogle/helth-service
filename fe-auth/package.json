@@ -37,6 +37,6 @@
 		"@badgateway/oauth2-client": "^2.0.17",
 		"axios": "^1.3.5",
 		"dotenv": "^16.3.1",
-		"firebase-admin": "^11.6.0"
+		"firebase-admin": "^12.0.0"
 	}
 }
