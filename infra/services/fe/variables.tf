@@ -8,8 +8,18 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "ssl_certificate_arn" {
+  description = "The ARN of the SSL certificate to use for the load balancer"
+  type        = string
+}
+
 variable "security_group_id" {
   description = "The ID of the security group to attach to the ECS service"
+  type        = string
+}
+
+variable "api_url" {
+  description = "The URL of the API service"
   type        = string
 }
 
@@ -20,10 +30,5 @@ variable "exec_role_arn" {
 
 variable "ecs_cluster_id" {
   description = "The ID of the ECS cluster where the service will be deployed"
-  type        = string
-}
-
-variable "api_url" {
-  description = "The URL of the API service"
   type        = string
 }

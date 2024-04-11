@@ -1,5 +1,5 @@
 locals {
-  service_name = "helth_service_discord_client"
+  service_name = "helth_service_fe"
 }
 
 data "aws_subnets" "vpc_subnets" {
@@ -9,24 +9,12 @@ data "aws_subnets" "vpc_subnets" {
   }
 }
 
-data "aws_ecr_repository" "helth_service_discord_client" {
-  name = "helth_service_discord_client"
+data "aws_ecr_repository" "helth_service_fe" {
+  name = "helth_service_frontend"
 }
 
-data "aws_secretsmanager_secret" "discord_bot_token" {
-  name = "helth_service_test_discord_bot_token"
-}
-
-data "aws_secretsmanager_secret" "discord_client_id" {
-  name = "helth_service_test_discord_client_id"
-}
-
-data "aws_secretsmanager_secret" "discord_client_secret" {
-  name = "helth_service_test_discord_client_secret"
-}
-
-resource "aws_lb" "helth_service_discord_client_lb" {
-  name               = "helth-service-discord-client-lb"
+resource "aws_lb" "helth_service_fe_lb" {
+  name               = "helth-service-fe-lb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.security_group_id]
@@ -36,8 +24,8 @@ resource "aws_lb" "helth_service_discord_client_lb" {
   }
 }
 
-resource "aws_lb_target_group" "helth_service_discord_client_tg" {
-  name        = "helth-service-discord-client-tg"
+resource "aws_lb_target_group" "helth_service_fe_tg" {
+  name        = "helth-service-fe-tg"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
@@ -45,27 +33,62 @@ resource "aws_lb_target_group" "helth_service_discord_client_tg" {
   health_check {
     enabled  = true
     interval = 30
-    path     = "/health"
+    path     = "/"
+  }
+  tags = {
+    environment = var.environment
   }
 }
 
-resource "aws_lb_listener" "helth_service_discord_client_listener" {
-  load_balancer_arn = aws_lb.helth_service_discord_client_lb.arn
+resource "aws_lb_listener" "helth_service_fe_lb_listener" {
+  load_balancer_arn = aws_lb.helth_service_fe_lb.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.helth_service_discord_client_tg.arn
+    target_group_arn = aws_lb_target_group.helth_service_fe_tg.arn
   }
 }
 
-resource "aws_ecs_task_definition" "helth_service_discord_client_task" {
+resource "aws_lb_listener" "helth_service_fe_lb_listener_https" {
+  load_balancer_arn = aws_lb.helth_service_fe_lb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.ssl_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.helth_service_fe_tg.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "helth_service_http_to_https_rule" {
+  listener_arn = aws_lb_listener.helth_service_fe_lb_listener.arn
+  priority     = 1
+
+  action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+  condition {
+    http_request_method {
+      values = ["GET", "HEAD"]
+    }
+  }
+}
+
+resource "aws_ecs_task_definition" "helth_service_fe_task" {
   family = local.service_name
   container_definitions = jsonencode([
     {
       "name" : "${local.service_name}",
-      "image" : "${data.aws_ecr_repository.helth_service_discord_client.repository_url}:latest",
+      "image" : "${data.aws_ecr_repository.helth_service_fe.repository_url}:latest",
       "cpu" : 0,
       "portMappings" : [
         {
@@ -85,25 +108,7 @@ resource "aws_ecs_task_definition" "helth_service_discord_client_task" {
         {
           "name" : "API_URL",
           "value" : "${var.api_url}"
-        },
-        {
-          "name" : "WEBHOOK_URL",
-          "value" : "http://${aws_lb.helth_service_discord_client_lb.dns_name}/webhook"
         }
-      ],
-      "secrets" : [
-        {
-          "name" : "DISCORD_BOT_TOKEN",
-          "valueFrom" : "${data.aws_secretsmanager_secret.discord_bot_token.arn}"
-        },
-        {
-          "name" : "DISCORD_CLIENT_ID",
-          "valueFrom" : "${data.aws_secretsmanager_secret.discord_client_id.arn}"
-        },
-        {
-          "name" : "DISCORD_CLIENT_SECRET",
-          "valueFrom" : "${data.aws_secretsmanager_secret.discord_client_secret.arn}"
-        },
       ],
       "readonlyRootFilesystem" : true,
       "logConfiguration" : {
@@ -116,8 +121,8 @@ resource "aws_ecs_task_definition" "helth_service_discord_client_task" {
         },
       },
       "healthCheck" : {
-        "command" : ["CMD-SHELL", "curl -f http://localhost/health || exit 1"],
-        "interval" : 10,
+        "command" : ["CMD-SHELL", "curl -f http://localhost/ || exit 1"],
+        "interval" : 30,
         "timeout" : 5,
         "retries" : 5
       }
@@ -130,14 +135,14 @@ resource "aws_ecs_task_definition" "helth_service_discord_client_task" {
   memory                   = 512
   execution_role_arn       = var.exec_role_arn
   tags = {
-    environment = "test"
+    environment = var.environment
   }
 }
 
-resource "aws_ecs_service" "helth_service_api" {
+resource "aws_ecs_service" "helth_service_fe" {
   name            = local.service_name
   cluster         = var.ecs_cluster_id
-  task_definition = aws_ecs_task_definition.helth_service_discord_client_task.arn
+  task_definition = aws_ecs_task_definition.helth_service_fe_task.arn
   desired_count   = 1
   launch_type     = "FARGATE"
   network_configuration {
@@ -147,12 +152,15 @@ resource "aws_ecs_service" "helth_service_api" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.helth_service_discord_client_tg.arn
+    target_group_arn = aws_lb_target_group.helth_service_fe_tg.arn
     container_name   = local.service_name
     container_port   = 80
   }
-
   tags = {
     environment = var.environment
   }
+}
+
+output "dns_name" {
+  value = aws_lb.helth_service_fe_lb.dns_name
 }

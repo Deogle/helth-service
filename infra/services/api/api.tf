@@ -37,6 +37,76 @@ data "aws_secretsmanager_secret" "whoop_redirect_url" {
   name = "helth_service_test_whoop_redirect_url"
 }
 
+resource "aws_lb" "helth_service_api_lb" {
+  name               = "helth-service-api-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [var.security_group_id]
+  subnets            = data.aws_subnets.vpc_subnets.ids
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_lb_target_group" "helth_service_api_tg" {
+  name        = "helth-service-api-tg"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+  health_check {
+    enabled  = true
+    interval = 30
+    path     = "/health"
+  }
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "aws_lb_listener" "helth_service_api_lb_listener" {
+  load_balancer_arn = aws_lb.helth_service_api_lb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.helth_service_api_tg.arn
+  }
+}
+
+resource "aws_lb_listener" "helth_service_api_lb_listener_https" {
+  load_balancer_arn = aws_lb.helth_service_api_lb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.ssl_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.helth_service_api_tg.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "helth_service_http_to_https_rule" {
+  listener_arn = aws_lb_listener.helth_service_api_lb_listener.arn
+  priority     = 1
+
+  action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+  condition {
+    http_request_method {
+      values = ["GET", "HEAD", "POST", "PUT", "DELETE"]
+    }
+  }
+}
+
 resource "aws_ecs_task_definition" "helth_service_api_task" {
   family = local.service_name
   container_definitions = jsonencode([
@@ -126,7 +196,17 @@ resource "aws_ecs_service" "helth_service_api" {
     security_groups  = [var.security_group_id]
     assign_public_ip = true
   }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.helth_service_api_tg.arn
+    container_name   = local.service_name
+    container_port   = 80
+  }
   tags = {
     environment = var.environment
   }
+}
+
+output "api_url" {
+  value = aws_lb.helth_service_api_lb.dns_name
 }

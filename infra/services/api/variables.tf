@@ -8,6 +8,11 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "ssl_certificate_arn" {
+  description = "The ARN of the SSL certificate to use for HTTPS listeners"
+  type        = string
+}
+
 variable "security_group_id" {
   description = "The ID of the security group to attach to the ECS service"
   type        = string
