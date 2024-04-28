@@ -8,6 +8,7 @@ import usersRouter from "./routes/users.routes";
 import oauthRouter from "./routes/oauth.routes";
 import summaryRouter from "./routes/summary.routes";
 import webhookRouter from "./routes/webhook.routes";
+import RateLimiter from "express-rate-limit";
 
 const app = express();
 
@@ -22,6 +23,12 @@ const loggerMiddleware = (
   next();
 };
 
+const limiter = RateLimiter({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: "Too many requests",
+});
+
 app.get("/", (_, res) => {
   res.status(405).end();
 });
@@ -31,6 +38,7 @@ app.get("/health", (_, res) => {
 });
 
 app.use(loggerMiddleware);
+app.use(limiter);
 
 app.use("/users", usersRouter);
 app.use("/oauth", oauthRouter);
