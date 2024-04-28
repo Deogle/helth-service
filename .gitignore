@@ -10,9 +10,14 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 db.json
-helth-alert-key.js
+helth-service-key.json
+*-key.json
+helth-service-key.json
 
 #infra
-infra/.terraform.*
-infra/.terraform
-infra/terraform.tfstate*
+*.pkg
+.terraform.*
+.terraform
+terraform.tfstate*
+*.auto.tfvars
+*.tfvars

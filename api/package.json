@@ -8,12 +8,14 @@
     "dev": "nodemon src/index.ts",
     "build": "rm -rf build && tsc",
     "clean": "rm -rf build",
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "deploy": "./docker-build.sh && ./docker-push.sh"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@badgateway/oauth2-client": "^2.0.18",
+    "@google-cloud/pubsub": "^4.3.3",
     "@types/express": "^4.17.17",
     "@types/morgan": "^1.9.4",
     "axios": "^1.6.0",
@@ -25,9 +27,8 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22",
-    "@types/axios": "^0.14.0",
     "@types/node": "^18.15.11",
+    "nodemon": "^2.0.22",
     "prettier": "^2.8.7",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"

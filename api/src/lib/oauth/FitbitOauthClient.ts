@@ -89,8 +89,9 @@ const FitbitOauthClient = {
     );
 
     const tokens = tokenResponse.data;
-    if (!tokens.access_token || !tokens.refresh_token)
+    if (!tokens.access_token || !tokens.refresh_token) {
       throw new Error("No tokens found");
+    }
 
     UserService.updateTokens(refreshToken, { ...tokens });
 

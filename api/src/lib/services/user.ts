@@ -112,7 +112,7 @@ const UserService = {
     const user = await DB.getUserByEmail(email);
     if (!user) throw new Error("User not found");
 
-    let summary;
+    let summary = null;
 
     const tokenFunction = async () => {
       return defaultTokenFunction(email);
@@ -142,7 +142,6 @@ const UserService = {
     } catch (error) {
       throw error;
     }
-
     return summary;
   },
 };
