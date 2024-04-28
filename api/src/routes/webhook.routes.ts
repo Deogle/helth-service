@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import DB from "../lib/db";
 import axios from "axios";
 import { FitbitWebhookData } from "../types/fitbit";
+import { publishMessage } from "../lib/services/publish";
 
 const webhookRouter = Router();
 
@@ -36,30 +37,20 @@ const validateWhoopWebhookRequest = (
 
 const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
+  console.log("Fetching recovery", data.id);
   if (!user) return null;
   const recoverySummary = await UserService.getSummary(
     user.email,
     dayjs().format("YYYY-MM-DD")
   );
-  const urlList = await DB.getAllWebhookUrls();
 
-  console.log(`Sending recovery update to ${urlList.length} webhooks`);
-
-  await Promise.allSettled(
-    urlList.map(async (url) => {
-      try {
-        await axios.post(url, recoverySummary);
-        DB.logSuccessfulWebhook(url);
-      } catch (error) {
-        DB.logFailedWebhook(url);
-      }
-    })
-  );
+  return recoverySummary;
 };
 
 const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
   console.log("Fetching workout", data.id);
+
   if (!user) return null;
   const whoopWorkoutSummary = await UserService.getActivity(
     user.email,
@@ -67,32 +58,21 @@ const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
     data.id
   );
 
-  const urlList = await DB.getAllWebhookUrls();
-
-  console.log(`Sending workout update to ${urlList.length} webhooks`);
-
-  await Promise.allSettled(
-    urlList.map(async (url) => {
-      try {
-        await axios.post(url, whoopWorkoutSummary);
-        DB.logSuccessfulWebhook(url);
-      } catch (error) {
-        DB.logFailedWebhook(url);
-      }
-    })
-  );
+  return whoopWorkoutSummary;
 };
 
 //TODO implement handler for workout updated
 const processWhoopWebhookData = async (data: WhoopWebhookData) => {
   console.log(`Received webhook for user ${data.user_id} of type ${data.type}`);
+  let message: { [key: string]: any } | null = null;
   switch (data.type) {
     case WhoopWebhookType.RECOVERY_UPDATED:
-      await handleRecoveryUpdated(data);
+      message = await handleRecoveryUpdated(data);
+      break;
     case WhoopWebhookType.RECOVERY_DELTED:
       break;
     case WhoopWebhookType.WORKOUT_UPDATED:
-      await handleWorkoutUpdated(data);
+      message = await handleWorkoutUpdated(data);
       break;
     case WhoopWebhookType.WORKOUT_DELETED:
       break;
@@ -101,8 +81,14 @@ const processWhoopWebhookData = async (data: WhoopWebhookData) => {
     case WhoopWebhookType.SLEEP_DELETED:
       break;
     default:
-      console.log("Invalid webhook type");
+      console.error("Invalid webhook type");
+      break;
   }
+  if (!message) return;
+  console.log(
+    `Publishing ${(message as { [k: string]: any })?.type} message...`
+  );
+  publishMessage(message);
 };
 
 const processFitbitWebhookData = async (data: FitbitWebhookData) => {

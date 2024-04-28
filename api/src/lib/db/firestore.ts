@@ -124,11 +124,6 @@ const FirestoreDB = (() => {
     return true;
   };
 
-  const getAllWebhookUrls = async () => {
-    const urlDocumentList = (await db.collection("webhooks").get()).docs;
-    return urlDocumentList.map((doc) => doc.data().url as string);
-  };
-
   const logSuccessfulWebhook = async (url: string) => {
     const doc = await db.collection("webhooks").where("url", "==", url).get();
     return await doc.docs?.[0]?.ref.update({
@@ -159,7 +154,6 @@ const FirestoreDB = (() => {
     getAllUsers,
     updateUser,
     registerWebhook,
-    getAllWebhookUrls,
     logFailedWebhook,
     logSuccessfulWebhook,
   };
