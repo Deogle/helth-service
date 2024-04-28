@@ -1,7 +1,6 @@
 terraform {
-  backend "s3" {
-    bucket = "helth-service-state-bucket"
-    key    = "shared/terraform.tfstate"
-    region = "us-east-1"
+  backend "gcs" {
+    bucket = "helth-tf-state"
+    prefix = "terraform/state"
   }
 }

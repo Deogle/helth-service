@@ -4,42 +4,12 @@ variable "environment" {
   default     = "test"
 }
 
-variable "vpc_id" {
-  description = "The ID of the VPC where the ECS cluster is deployed"
-  type        = string
+variable "project_id" {
+  description = "The project id to deploy modules under"
+  default     = "helth-service-test"
 }
 
-variable "ssl_certificate_arn" {
-  description = "The ARN of the SSL certificate to use for the load balancer"
-  type        = string
-}
-
-variable "security_group_id" {
-  description = "The ID of the security group to attach to the ECS service"
-  type        = string
-}
-
-variable "exec_role_arn" {
-  description = "The ARN of the IAM role to assume when executing the ECS task"
-  type        = string
-}
-
-variable "discord_bot_token" {
-  description = "The Discord bot token"
-  type        = string
-}
-
-variable "discord_client_id" {
-  description = "The Discord client ID"
-  type        = string
-}
-
-variable "discord_client_secret" {
-  description = "The Discord client secret"
-  type        = string
-}
-
-variable "api_url" {
-  description = "The URL of the API service"
-  type        = string
-}
+# variable "api_url" {
+#   description = "The URL of the API service"
+#   type        = string
+# }
