@@ -38,9 +38,10 @@ app.get("/health", (_, res) => {
 });
 
 app.use(loggerMiddleware);
+app.use(limiter);
 
 app.use("/users", usersRouter);
-app.use("/oauth", [limiter], oauthRouter);
+app.use("/oauth", oauthRouter);
 app.use("/summary", summaryRouter);
 app.use("/webhooks", webhookRouter);
 
