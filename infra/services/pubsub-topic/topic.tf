@@ -49,3 +49,7 @@ resource "google_pubsub_subscription" "subscription" {
   }
   depends_on = [var.service]
 }
+
+output "name" {
+  value = google_pubsub_topic.topic.id
+}

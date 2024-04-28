@@ -17,6 +17,10 @@ variable "project_id" {
   description = "The project id"
 }
 
+variable "pubsub_topic" {
+  description = "The pubsub topic to publish to"
+}
+
 variable "image_name" {
   description = "The image to deploy to cloud run"
 }

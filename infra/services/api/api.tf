@@ -88,6 +88,10 @@ resource "google_cloud_run_v2_service" "helth_service_api" {
           }
         }
       }
+      env {
+        name  = "PUBSUB_TOPIC"
+        value = var.pubsub_topic
+      }
     }
   }
 }

@@ -13,10 +13,11 @@ provider "google" {
 module "api_service" {
   source = "../../services/api"
 
-  region      = local.region
-  environment = var.environment
-  project_id  = var.project_id
-  image_name  = "us-docker.pkg.dev/helth-service-test/helth-ar/api:latest"
+  region       = local.region
+  environment  = var.environment
+  project_id   = var.project_id
+  image_name   = "us-docker.pkg.dev/helth-service-test/helth-ar/api:latest"
+  pubsub_topic = module.pubsub_topic.name
 }
 
 module "fe" {
