@@ -8,7 +8,8 @@
     "dev": "nodemon src/index.ts",
     "build": "rm -rf build && tsc",
     "clean": "rm -rf build",
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "deploy": "./docker-build.sh && ./docker-push.sh"
   },
   "author": "",
   "license": "MIT",

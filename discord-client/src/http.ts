@@ -22,16 +22,26 @@ const initializeServer = async (client: any) => {
   }
 
   app.post("/webhook", (req, res) => {
-    if (req.body.type === "workout") {
-      client.onWorkoutUpdated(req.body);
-      console.log(`Received workout update for user ${req.body.email}`);
+    if (!req.body) {
+      console.error("Received empty request body");
+      return res.status(400).json({ message: "empty request body" });
+    }
+    if (!req.body.message) {
+      console.error("Received malformed request body");
+      return res.status(400).json({ message: "missing message" });
+    }
+    const messageData = req.body.message;
+
+    if (messageData.type === "workout") {
+      client.onWorkoutUpdated(messageData);
+      console.log(`Received workout update for user ${messageData.email}`);
       return res.status(200).json({ message: "success" });
-    } else if (req.body.type === "recovery") {
+    } else if (messageData.type == "recovery") {
       client.onRecoveryUpdated(req.body);
-      console.log(`Received recovery update for user ${req.body.email}`);
+      console.log(`Received recovery update for user ${messageData.email}`);
       return res.status(200).json({ message: "success" });
     } else {
-      console.error("Received unknown event type", req.body.type);
+      console.error("Received unknown event type", messageData.type);
       return res.status(400).json({ message: "unknown event type" });
     }
   });
