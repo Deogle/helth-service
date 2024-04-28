@@ -3,32 +3,24 @@ variable "environment" {
   type        = string
 }
 
-variable "vpc_id" {
-  description = "The ID of the VPC where the ECS cluster is deployed"
-  type        = string
+variable "region" {
+  description = "The region to launch the service within."
+  default     = "us-central1"
 }
 
-variable "ssl_certificate_arn" {
-  description = "The ARN of the SSL certificate to use for the load balancer"
-  type        = string
+variable "service_account_name" {
+  description = "The name of the service account to launch this service."
+  default     = ""
 }
 
-variable "security_group_id" {
-  description = "The ID of the security group to attach to the ECS service"
-  type        = string
+variable "project_id" {
+  description = "The project id"
+}
+
+variable "image_name" {
+  description = "The image to deploy to cloud run"
 }
 
 variable "api_url" {
-  description = "The URL of the API service"
-  type        = string
-}
-
-variable "exec_role_arn" {
-  description = "The ARN of the IAM role to assume when executing the ECS task"
-  type        = string
-}
-
-variable "ecs_cluster_id" {
-  description = "The ID of the ECS cluster where the service will be deployed"
-  type        = string
+  description = "the url of the api service"
 }

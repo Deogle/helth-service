@@ -17,6 +17,7 @@ variable "project_id" {
   description = "The project id"
 }
 
-variable "api_image_name" {
+variable "image_name" {
   description = "The image to deploy to cloud run"
 }
+

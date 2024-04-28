@@ -1,13 +1,7 @@
-import axios from "axios";
-import { env } from "$env/dynamic/private";
+import { createPrivAxiosInstance } from "../axios/factory";
 
 const UsersApi = {
-  instance: axios.create({
-    baseURL: env.API_URL,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }),
+  instance: createPrivAxiosInstance(),
   async fetchUser(email: string) {
     return await (
       await this.instance.get(`/users/${encodeURIComponent(email)}`)
