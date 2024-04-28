@@ -9,7 +9,14 @@ variable "project_id" {
   default     = "helth-service-test"
 }
 
-# variable "api_url" {
-#   description = "The URL of the API service"
-#   type        = string
-# }
+variable "discord_bot_token" {
+  description = "The discord bot token"
+}
+
+variable "discord_client_id" {
+  description = "The discord client id"
+}
+
+variable "discord_client_secret" {
+  description = "The discord client secret"
+}
