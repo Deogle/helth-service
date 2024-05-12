@@ -3,6 +3,9 @@ locals {
   project_id   = "helth-service-test"
 }
 
+resource "random_uuid" "container_uuid" {
+}
+
 data "google_secret_manager_secret_version" "gcloud_email" {
   secret = "gcloud-client-email-${var.environment}"
 }
@@ -38,6 +41,7 @@ resource "google_cloud_run_v2_service" "helth_service_api" {
     }
 
     containers {
+      name  = "api-${random_uuid.container_uuid.result}"
       image = var.image_name
       env {
         name = "GCLOUD_CLIENT_EMAIL"

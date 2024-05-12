@@ -3,6 +3,9 @@ locals {
   project_id   = "helth-service-test"
 }
 
+resource "random_uuid" "container_uuid" {
+}
+
 resource "google_cloud_run_v2_service" "helth_service_fe" {
   name     = local.service_name
   location = var.region
@@ -19,6 +22,7 @@ resource "google_cloud_run_v2_service" "helth_service_fe" {
     }
 
     containers {
+      name  = "fe-${random_uuid.container_uuid.result}"
       image = var.image_name
       env {
         name  = "API_URL"
