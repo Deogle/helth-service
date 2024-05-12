@@ -4,23 +4,23 @@ locals {
 }
 
 data "google_secret_manager_secret_version" "gcloud_email" {
-  secret = "gcloud-client-email-test"
+  secret = "gcloud-client-email-${var.environment}"
 }
 
 data "google_secret_manager_secret_version" "gcloud_private_key" {
-  secret = "gcloud-private-key-test"
+  secret = "gcloud-private-key-${var.environment}"
 }
 
 data "google_secret_manager_secret_version" "whoop_client_id" {
-  secret = "whoop-client-id-test"
+  secret = "whoop-client-id-${var.environment}"
 }
 
 data "google_secret_manager_secret_version" "whoop_client_secret" {
-  secret = "whoop-client-secret-test"
+  secret = "whoop-client-secret-${var.environment}"
 }
 
 data "google_secret_manager_secret_version" "whoop_redirect_url" {
-  secret = "whoop-redirect-url-test"
+  secret = "whoop-redirect-url-${var.environment}"
 }
 
 resource "google_cloud_run_v2_service" "helth_service_api" {

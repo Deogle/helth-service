@@ -24,15 +24,3 @@ variable "api_url" {
 variable "image_name" {
   description = "The image to deploy to cloud run"
 }
-
-variable "discord_bot_token" {
-  description = "The discord bot token"
-}
-
-variable "discord_client_id" {
-  description = "The discord client id"
-}
-
-variable "discord_client_secret" {
-  description = "The discord client secret"
-}

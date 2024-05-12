@@ -21,3 +21,5 @@ helth-service-key.json
 terraform.tfstate*
 *.auto.tfvars
 *.tfvars
+
+secrets.json

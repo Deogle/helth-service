@@ -1,5 +1,18 @@
 locals {
   service_name = "helth-service-discord-client"
+  project_id   = "helth-service-test"
+}
+
+data "google_secret_manager_secret_version" "bot_token" {
+  secret = "discord-bot-token-${var.environment}"
+}
+
+data "google_secret_manager_secret_version" "client_id" {
+  secret = "discord-client-id-${var.environment}"
+}
+
+data "google_secret_manager_secret_version" "client_secret" {
+  secret = "discord-client-secret-${var.environment}"
 }
 
 resource "google_cloud_run_v2_service" "helth_service_client" {
@@ -24,16 +37,31 @@ resource "google_cloud_run_v2_service" "helth_service_client" {
         value = var.api_url
       }
       env {
-        name  = "DISCORD_BOT_TOKEN"
-        value = var.discord_bot_token
+        name = "DISCORD_BOT_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret_version.bot_token.secret
+            version = "latest"
+          }
+        }
       }
       env {
-        name  = "DISCORD_CLIENT_ID"
-        value = var.discord_client_id
+        name = "DISCORD_CLIENT_ID"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret_version.client_id.secret
+            version = "latest"
+          }
+        }
       }
       env {
-        name  = "DISCORD_CLIENT_SECRET"
-        value = var.discord_client_secret
+        name = "DISCORD_CLIENT_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = data.google_secret_manager_secret_version.client_secret.secret
+            version = "latest"
+          }
+        }
       }
     }
   }
