@@ -14,6 +14,8 @@ const app = express();
 
 app.use(json());
 
+app.enable("trust proxy");
+
 const loggerMiddleware = (
   req: express.Request,
   res: express.Response,
