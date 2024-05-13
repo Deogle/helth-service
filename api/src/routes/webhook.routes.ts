@@ -37,7 +37,7 @@ const validateWhoopWebhookRequest = (
 
 const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
-  console.log("Fetching recovery", data.id);
+  console.log(`Fetching recover summary for user ${data.user_id}...`, data.id);
   if (!user) return null;
   const recoverySummary = await UserService.getSummary(
     user.email,
@@ -84,7 +84,10 @@ const processWhoopWebhookData = async (data: WhoopWebhookData) => {
       console.error("Invalid webhook type");
       break;
   }
-  if (!message) return;
+  if (!message) {
+    console.error("Failed to process webhook data:", data);
+    return;
+  }
   console.log(
     `Publishing ${(message as { [k: string]: any })?.type} message...`
   );

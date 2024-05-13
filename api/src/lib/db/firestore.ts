@@ -11,11 +11,11 @@ const getServiceAccount = () => {
     serviceAccountKey = JSON.parse(
       readFileSync("helth-service-key.json", "utf-8")
     );
+    console.error(
+      "Service account key file found. Using service account key for authentication."
+    );
     return serviceAccountKey;
   } catch (error) {
-    console.error(
-      "Service account key file not found. Falling back to environment variables."
-    );
     const { GCLOUD_PROJECT_ID, GCLOUD_CLIENT_EMAIL, GCLOUD_PRIVATE_KEY } =
       serviceAccountKey ?? process.env;
 
