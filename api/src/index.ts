@@ -16,19 +16,13 @@ app.use(json());
 
 app.enable("trust proxy");
 
-const loggerMiddleware = (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-};
-
 const limiter = RateLimiter({
   windowMs: 60 * 1000,
   max: 100,
   message: "Too many requests",
+  validate: {
+    trustProxy: false,
+  },
 });
 
 app.get("/", (_, res) => {
@@ -39,7 +33,6 @@ app.get("/health", (_, res) => {
   res.status(200).end();
 });
 
-app.use(loggerMiddleware);
 app.use(limiter);
 
 app.use("/users", usersRouter);

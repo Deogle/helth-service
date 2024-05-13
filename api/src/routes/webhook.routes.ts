@@ -37,7 +37,7 @@ const validateWhoopWebhookRequest = (
 
 const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
-  console.log(`Fetching recover summary for user ${data.user_id}...`, data.id);
+  console.log(`Fetching recovery summary for user ${data.user_id}...`, data.id);
   if (!user) return null;
   const recoverySummary = await UserService.getSummary(
     user.email,
