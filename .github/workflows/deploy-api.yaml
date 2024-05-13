@@ -1,0 +1,60 @@
+name: Deploy API
+run-name: ${{github.actor}} deploying API from ${{github.event_name}} / ${{github.ref}}
+on:  [workflow_dispatch]
+env:
+    SERVICE_NAME: helth-service-api-test
+    REGION: us-central1
+defaults:
+    run:
+        working-directory: ./api
+jobs:
+    build-push-image:
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: "Checkout code"
+                uses: "actions/checkout@v4"
+            - 
+                name: "Setup node"
+                uses: "actions/setup-node@v4"
+                with:
+                    node-version: '22'
+            -
+                id: "auth"
+                uses: "google-github-actions/auth@v1"
+                with:
+                    credentials_json: "${{secrets.SERVICE_ACCOUNT_KEY}}"
+                    token_format: 'access_token'
+            -
+                id: "docker-auth"
+                name: "Auth docker"
+                uses: 'docker/login-action@v3'
+                with:
+                    username: 'oauth2accesstoken'
+                    password: '${{steps.auth.outputs.access_token}}'
+                    registry: 'us-docker.pkg.dev'
+            - 
+                name: "Build & deploy"
+                run: npm run deploy
+    create-cloud-run-revision:
+        runs-on: ubuntu-latest
+        needs: build-push-image
+        steps:
+            -
+                name: "Checkout code"
+                uses: "actions/checkout@v4"
+            -
+                id: "auth"
+                name: "Auth with gcloud"
+                uses: "google-github-actions/auth@v1"
+                with:
+                    credentials_json: "${{secrets.SERVICE_ACCOUNT_KEY}}"
+            -
+                name: Deploy to Cloud Run
+                id: deploy
+                uses: google-github-actions/deploy-cloudrun@v2
+                with:
+                    image: us-docker.pkg.dev/helth-service-test/helth-ar/api:latest
+                    service: ${{env.SERVICE_NAME}}
+                    region: ${{env.REGION}}
+
