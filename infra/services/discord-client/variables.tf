@@ -24,3 +24,8 @@ variable "api_url" {
 variable "image_name" {
   description = "The image to deploy to cloud run"
 }
+
+variable "sa" {
+  description = "The service account to bind to the service"
+  type        = string
+}

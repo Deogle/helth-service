@@ -71,21 +71,21 @@ resource "google_cloud_run_v2_service" "helth_service_client" {
   }
 }
 
-data "google_iam_policy" "noauth" {
+data "google_iam_policy" "invoker_policy" {
   binding {
     role = "roles/run.invoker"
     members = [
-      "allUsers",
+      var.sa,
     ]
   }
 }
 
-resource "google_cloud_run_service_iam_policy" "noauth" {
+resource "google_cloud_run_service_iam_policy" "invoker_policy" {
   location = google_cloud_run_v2_service.helth_service_client.location
   project  = google_cloud_run_v2_service.helth_service_client.project
   service  = google_cloud_run_v2_service.helth_service_client.name
 
-  policy_data = data.google_iam_policy.noauth.policy_data
+  policy_data = data.google_iam_policy.invoker_policy.policy_data
 }
 
 output "url" {

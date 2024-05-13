@@ -38,6 +38,7 @@ module "discord_client" {
   environment = var.environment
   image_name  = "us-docker.pkg.dev/helth-service-test/helth-ar/client:latest"
   api_url     = module.api_service.url
+  sa          = module.pubsub_topic.sa
 }
 
 module "pubsub_topic" {

@@ -53,3 +53,7 @@ resource "google_pubsub_subscription" "subscription" {
 output "name" {
   value = google_pubsub_topic.topic.id
 }
+
+output "sa" {
+  value = "serviceAccount:${google_service_account.sa.email}"
+}
