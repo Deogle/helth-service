@@ -47,7 +47,7 @@ module "pubsub_topic" {
   region      = local.region
   project_id  = var.project_id
   environment = var.environment
-  name        = "helth-service-pubsub-topic"
+  name        = "helth-service-pubsub-topic-${var.environment}"
   service = {
     name     = module.discord_client.name
     url      = "${module.discord_client.url}/webhook"

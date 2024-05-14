@@ -20,8 +20,13 @@ const limiter = RateLimiter({
   windowMs: 60 * 1000,
   max: 100,
   message: "Too many requests",
-  validate: {
-    trustProxy: false,
+  //snippet from https://github.com/express-rate-limit/express-rate-limit/wiki/Troubleshooting-Proxy-Issues
+  keyGenerator(request: any, _response: any): string {
+    if (!request.ip) {
+      console.error("Warning: request.ip is missing!");
+      return request.socket.remoteAddress;
+    }
+    return request.ip.replace(/:\d+[^:]*$/, "");
   },
 });
 

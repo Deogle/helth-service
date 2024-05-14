@@ -1,5 +1,5 @@
 locals {
-  service_name = "helth-service-api-test"
+  service_name = "helth-service-api-${var.environment}"
   project_id   = "helth-service-test"
 }
 

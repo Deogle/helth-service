@@ -1,5 +1,5 @@
 locals {
-  service_name = "helth-service-discord-client"
+  service_name = "helth-service-discord-client-${var.environment}"
   project_id   = "helth-service-test"
 }
 
