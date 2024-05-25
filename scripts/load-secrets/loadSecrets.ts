@@ -24,13 +24,13 @@ async function createSecretVersion(
 }
 
 async function loadSecrets() {
+  const [, , projectId, secretsFile] = process.argv;
   try {
     // Load the secrets from the JSON file
     const secrets: SecretConfig = JSON.parse(
-      fs.readFileSync("secrets.json", "utf8")
+      fs.readFileSync(secretsFile, "utf8")
     );
 
-    const projectId = process.argv[2];
     if (!projectId) {
       console.error("Project id is required");
       return;
@@ -57,9 +57,9 @@ async function loadSecrets() {
         if (error.code !== 6) {
           throw error;
         }
-        console.log(
-          `Secret '${key}' already exists. Creating a new version...`
-        );
+        console.log(`Secret already exists. Creating a new version...`, {
+          key,
+        });
       }
       createSecretVersion(
         client,
