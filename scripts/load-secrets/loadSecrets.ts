@@ -26,7 +26,6 @@ async function createSecretVersion(
 async function loadSecrets() {
   const [, , projectId, secretsFile] = process.argv;
   try {
-    // Load the secrets from the JSON file
     const secrets: SecretConfig = JSON.parse(
       fs.readFileSync(secretsFile, "utf8")
     );
@@ -36,10 +35,8 @@ async function loadSecrets() {
       return;
     }
 
-    // Create a Secret Manager client
     const client = new SecretManagerServiceClient();
 
-    // Iterate over the secrets and create or update them in Secret Manager
     for (const [key, value] of Object.entries(secrets)) {
       console.log(`Creating secret '${key}' in project '${projectId}'`);
       try {
