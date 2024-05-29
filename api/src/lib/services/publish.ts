@@ -1,4 +1,5 @@
 import { PubSub } from "@google-cloud/pubsub";
+import logger from "../../util/logger";
 
 // Create a new instance of the PubSub client
 const pubsub = new PubSub();
@@ -14,15 +15,16 @@ async function publishMessage(
   try {
     const topic = pubsub.topic(topicName);
 
-    if (typeof message === "object") {
-      message = JSON.stringify(message);
-    }
+    await topic.publishMessage({
+      json: message,
+    });
 
-    await topic.publish(Buffer.from(message));
-
-    console.log(`Message published to topic: ${topicName}`);
+    logger.info("Published message", {
+      topic: topic.name,
+      pubsubData: message,
+    });
   } catch (error) {
-    console.error("Error publishing message:", error);
+    logger.error("Error publishing message", error);
   }
 }
 

@@ -3,6 +3,7 @@ import { Router } from "express";
 import UserService from "../lib/services/user";
 import FitbitService from "../lib/services/fitbit";
 import WhoopService from "../lib/services/whoop";
+import logger from "../util/logger";
 
 const oauthRouter = Router();
 
@@ -40,7 +41,7 @@ oauthRouter.post("/fitbit/auth", async (req, res) => {
     await UserService.create(email, userData);
     res.status(201).json({ email, provider: userData.provider });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).send("Something went wrong");
   }
 });

@@ -119,12 +119,10 @@ const FitbitService = (tokens: {
   };
   const getSummary = async (date: string) => {
     const hrvData = await FitbitApi(tokens).fetchHrvData(date);
-    console.log(hrvData);
     return hrvData;
   };
   const subscribeToActivities = async () => {
     const status = await FitbitApi(tokens).subscribeToActivities();
-    console.log(status);
   };
   return {
     getUser,

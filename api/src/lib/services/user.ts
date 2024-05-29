@@ -1,5 +1,6 @@
 import { FitnessUpdateTypes, WebhookTypes } from "../../types/api";
 import { WhoopWorkoutData } from "../../types/whoop";
+import logger from "../../util/logger";
 import DB from "../db";
 import FitbitService from "./fitbit";
 import WhoopService from "./whoop";
@@ -104,7 +105,7 @@ const UserService = {
           throw new Error("Provider not supported");
       }
     } catch (error: any) {
-      console.error(error.response);
+      logger.error(error);
     }
     return activity;
   },

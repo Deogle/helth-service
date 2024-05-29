@@ -7,6 +7,7 @@ import DB from "../lib/db";
 import axios from "axios";
 import { FitbitWebhookData } from "../types/fitbit";
 import { publishMessage } from "../lib/services/publish";
+import logger from "../util/logger";
 
 const webhookRouter = Router();
 
@@ -37,7 +38,10 @@ const validateWhoopWebhookRequest = (
 
 const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
-  console.log(`Fetching recovery summary for user ${data.user_id}...`, data.id);
+  logger.info(`Fetching recovery summary`, {
+    userId: user?.email,
+    webhookData: data,
+  });
   if (!user) return null;
   const recoverySummary = await UserService.getSummary(
     user.email,
@@ -49,7 +53,7 @@ const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
 
 const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
-  console.log("Fetching workout", data.id);
+  logger.info("Fetching workout", { userId: user?.email, webhookData: data });
 
   if (!user) return null;
   const whoopWorkoutSummary = await UserService.getActivity(
@@ -63,7 +67,7 @@ const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
 
 //TODO implement handler for workout updated
 const processWhoopWebhookData = async (data: WhoopWebhookData) => {
-  console.log(`Received webhook for user ${data.user_id} of type ${data.type}`);
+  logger.info("Received whoop webhook request", { data });
   let message: { [key: string]: any } | null = null;
   switch (data.type) {
     case WhoopWebhookType.RECOVERY_UPDATED:
@@ -81,21 +85,19 @@ const processWhoopWebhookData = async (data: WhoopWebhookData) => {
     case WhoopWebhookType.SLEEP_DELETED:
       break;
     default:
-      console.error("Invalid webhook type");
+      logger.error("Invalid webhook type", { type: data.type });
       break;
   }
   if (!message) {
-    console.error("Failed to process webhook data:", data);
+    logger.error("Failed to process webhook data", { data });
     return;
   }
-  console.log(
-    `Publishing ${(message as { [k: string]: any })?.type} message...`
-  );
+  logger.info("Publishing message", { pubsubData: message });
   publishMessage(message);
 };
 
 const processFitbitWebhookData = async (data: FitbitWebhookData) => {
-  console.log(data);
+  logger.info("Received fitbit webhook request", { data });
 };
 
 webhookRouter.post(
@@ -122,8 +124,6 @@ webhookRouter.get("/fitbit", async (req: Request, res: Response) => {
 });
 
 webhookRouter.post("/fitbit", async (req: Request, res: Response) => {
-  console.log("WEBHOOK RECEIVED");
-
   const fitbitWebhookData: FitbitWebhookData[] = req.body;
   fitbitWebhookData.forEach(processFitbitWebhookData);
 
@@ -141,7 +141,7 @@ webhookRouter.post("/register", async (req: Request, res: Response) => {
     }
     return res.status(304).json({ error: "Webhook already registered" });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

@@ -7,8 +7,6 @@ export async function GET() {
 
     return new Response(JSON.stringify({ url: authUrl }));
   } catch (err) {
-    console.log(err);
-
     throw error(500, "failed to fetch auth code");
   }
 }
