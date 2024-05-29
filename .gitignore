@@ -22,4 +22,4 @@ terraform.tfstate*
 *.auto.tfvars
 *.tfvars
 
-secrets.json
+secrets*.json

@@ -5,6 +5,10 @@ import { readFileSync } from "fs";
 
 let initialized = false;
 
+const getDb = () => {
+  return process.env.NODE_ENV === "prod" ? "prod" : "test";
+};
+
 const getServiceAccount = () => {
   let serviceAccountKey;
   try {
@@ -41,7 +45,7 @@ const FirestoreDB = (() => {
     initializeFirestoreAppCredentials();
   }
 
-  const db = getFirestore();
+  const db = getFirestore(getDb());
 
   const getUserByEmail = async (email: string) => {
     try {

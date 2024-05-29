@@ -28,6 +28,10 @@ resource "google_cloud_run_v2_service" "helth_service_fe" {
         name  = "API_URL"
         value = var.api_url
       }
+      env {
+        name  = "NODE_ENV"
+        value = var.environment
+      }
     }
   }
 }

@@ -2,7 +2,7 @@
   "name": "scripts",
   "version": "1.0.0",
   "scripts": {
-    "secrets": "ts-node ./loadSecrets.ts"
+    "secrets": "ts-node ./load-secrets/loadSecrets.ts"
   },
   "author": "",
   "license": "MIT",
