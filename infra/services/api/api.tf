@@ -96,6 +96,10 @@ resource "google_cloud_run_v2_service" "helth_service_api" {
         name  = "PUBSUB_TOPIC"
         value = var.pubsub_topic
       }
+      env {
+        name  = "NODE_ENV"
+        value = var.environment
+      }
     }
   }
 }

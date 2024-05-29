@@ -41,6 +41,10 @@ resource "google_cloud_run_v2_service" "helth_service_client" {
         value = var.api_url
       }
       env {
+        name  = "NODE_ENV"
+        value = var.environment
+      }
+      env {
         name = "DISCORD_BOT_TOKEN"
         value_source {
           secret_key_ref {
