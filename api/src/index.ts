@@ -9,6 +9,7 @@ import oauthRouter from "./routes/oauth.routes";
 import summaryRouter from "./routes/summary.routes";
 import webhookRouter from "./routes/webhook.routes";
 import RateLimiter from "express-rate-limit";
+import logger from "./util/logger";
 
 const app = express();
 
@@ -23,7 +24,7 @@ const limiter = RateLimiter({
   //snippet from https://github.com/express-rate-limit/express-rate-limit/wiki/Troubleshooting-Proxy-Issues
   keyGenerator(request: any, _response: any): string {
     if (!request.ip) {
-      console.error("Warning: request.ip is missing!");
+      logger.warn("request.ip is missing!");
       return request.socket.remoteAddress;
     }
     return request.ip.replace(/:\d+[^:]*$/, "");
@@ -48,5 +49,5 @@ app.use("/webhooks", webhookRouter);
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  logger.info(`Server running`, { port });
 });

@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import admin from "firebase-admin";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 import { readFileSync } from "fs";
+import logger from "../../util/logger";
 
 let initialized = false;
 
@@ -15,7 +16,7 @@ const getServiceAccount = () => {
     serviceAccountKey = JSON.parse(
       readFileSync("helth-service-key.json", "utf-8")
     );
-    console.error(
+    logger.info(
       "Service account key file found. Using service account key for authentication."
     );
     return serviceAccountKey;
@@ -52,7 +53,7 @@ const FirestoreDB = (() => {
       const doc = await db.collection("users").doc(email).get();
       return doc.data();
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -61,7 +62,7 @@ const FirestoreDB = (() => {
       const doc = await db.collection("users").where("user_id", "==", id).get();
       return doc.docs[0].data();
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -73,7 +74,7 @@ const FirestoreDB = (() => {
         .get();
       return snapshot.docs[0]?.data() as { [key: string]: any };
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -123,7 +124,7 @@ const FirestoreDB = (() => {
       failureCount: 0,
     });
 
-    console.log(`Registered webhook ${url}`);
+    logger.info(`Registered webhook`, { url });
 
     return true;
   };
@@ -136,14 +137,16 @@ const FirestoreDB = (() => {
   };
 
   const logFailedWebhook = async (url: string) => {
-    console.error(`Failed to push webhook to ${url}, logging failure`);
+    logger.error(`Failed to push webhook`, { url });
     const doc = await db.collection("webhooks").where("url", "==", url).get();
     await doc.docs?.[0]?.ref.update({
       lastFailure: FieldValue.serverTimestamp(),
       failureCount: FieldValue.increment(1),
     });
     if (doc.docs?.[0]?.data().failureCount >= 5) {
-      console.log(`Deleting webhook ${doc.docs?.[0]?.data().url}`);
+      logger.info(`Deleting webhook`, {
+        webhookurl: doc.docs?.[0]?.data().url,
+      });
       await doc.docs?.[0]?.ref.delete();
     }
     return;

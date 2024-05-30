@@ -2,6 +2,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { WhoopOauthClient } from "../oauth";
 import { WhoopWorkoutMap } from "../../types/whoop";
+import logger from "../../util/logger";
 
 const WhoopApi = async (
   tokenFunction: () => Promise<{ access_token: string; refresh_token: string }>
@@ -105,8 +106,8 @@ const WhoopService = (
     sleep.sleepScore = sleep.score;
     delete sleep.score;
 
-    if (!recovery) console.error(`Summary for ${date} not found.`);
-    if (!sleep) console.error(`Sleep for ${date} not found.`);
+    if (!recovery) logger.error(`Summary not found.`, { date });
+    if (!sleep) logger.error(`Sleep not found`, { date });
 
     const summary = {
       ...recovery,

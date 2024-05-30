@@ -1,6 +1,7 @@
 import { OAuth2Client } from "@badgateway/oauth2-client";
 import axios from "axios";
 import UserService from "../services/user";
+import logger from "../../util/logger";
 
 const WHOOP_AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth";
 const WHOOP_TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token";
@@ -80,7 +81,7 @@ const WhoopOauthClient = {
 
       return tokens.access_token;
     } catch (error) {
-      console.error("Failed to refresh token", error);
+      logger.error("Failed to refresh token", error);
     }
   },
 };

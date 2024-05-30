@@ -1,6 +1,7 @@
 import { OAuth2Client, generateCodeVerifier } from "@badgateway/oauth2-client";
 import axios from "axios";
 import UserService from "../services/user";
+import logger from "../../util/logger";
 
 const FITBIT_AUTH_URL = "https://www.fitbit.com/oauth2/authorize";
 const FITBIT_TOKEN_URL = "https://api.fitbit.com/oauth2/token";
@@ -43,7 +44,7 @@ const FitbitOauthClient = {
       const tokenResponse = await axios.post(tokenUrl, payload, config);
       return tokenResponse.data;
     } catch (error: any) {
-      console.error(error.name, error.code, error.message, error.response.data);
+      logger.error(error);
       throw new Error("Failed to fetch tokens");
     }
   },
