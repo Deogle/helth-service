@@ -1,8 +1,14 @@
 name: Deploy API
 run-name: ${{github.actor}} deploying API from ${{github.event_name}} / ${{github.ref}}
+inputs:
+    environment:
+        description: 'Environment to deploy to'
+        default: 'test'
+        required: true
+
 on:  [workflow_dispatch]
 env:
-    SERVICE_NAME: helth-service-api-test
+    SERVICE_NAME: helth-service-api-${{INPUT_ENVIRONMENT}}
     REGION: us-central1
 defaults:
     run:
