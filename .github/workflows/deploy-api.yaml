@@ -11,7 +11,7 @@ on:
                     - 'test'
                     - 'prod'
 env:
-    SERVICE_NAME: helth-service-api-${{INPUT_ENVIRONMENT}}
+    SERVICE_NAME: helth-service-api-${{ github.event.inputs.environment }}
     REGION: us-central1
 defaults:
     run:
@@ -23,6 +23,10 @@ jobs:
             -
                 name: "Checkout code"
                 uses: "actions/checkout@v4"
+            -
+                name: "Deploy to ${{ github.event.inputs.environment }}"
+                run: |
+                    echo "Deploying to ${{ github.event.inputs.environment }}"
             - 
                 name: "Setup node"
                 uses: "actions/setup-node@v4"
