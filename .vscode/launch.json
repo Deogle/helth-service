@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "cwd": "${workspaceFolder}/api",
+      "request": "launch",
+      "name": "Run Api",
+      "skipFiles": ["<node_internals>/**"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "envFile": "${workspaceFolder}/.env",
+      "outputCapture": "std"
+    },
+    {
+      "type": "node",
+      "cwd": "${workspaceFolder}/discord-client",
+      "request": "launch",
+      "name": "Run Discord Client",
+      "skipFiles": ["<node_internals>/**"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "envFile": "${workspaceFolder}/.env",
+      "outputCapture": "std"
+    },
+    {
+      "type": "node",
+      "cwd": "${workspaceFolder}/fe-auth",
+      "request": "launch",
+      "name": "Run Sveltekit Fe",
+      "skipFiles": ["<node_internals>/**"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "envFile": "${workspaceFolder}/.env",
+      "outputCapture": "std"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Helth Service",
+      "configurations": ["Run Api", "Run Discord Client", "Run Sveltekit Fe"],
+      "stopAll": true
+    }
+  ]
+}
