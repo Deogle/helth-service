@@ -1,8 +1,17 @@
 name: Deploy API
 run-name: ${{github.actor}} deploying API from ${{github.event_name}} / ${{github.ref}}
-on:  [workflow_dispatch]
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment to deploy to'
+                required: true
+                default: 'test'
+                options:
+                    - 'test'
+                    - 'prod'
 env:
-    SERVICE_NAME: helth-service-api-test
+    SERVICE_NAME: helth-service-api-${{ github.event.inputs.environment }}
     REGION: us-central1
 defaults:
     run:
@@ -14,6 +23,17 @@ jobs:
             -
                 name: "Checkout code"
                 uses: "actions/checkout@v4"
+            -
+                name: "Deploy to ${{ github.event.inputs.environment }}"
+                run: |
+                    if [ "${{ github.event.inputs.environment }}" = "test" ]; then
+                        echo "Deploying to test"
+                    elif [ "${{ github.event.inputs.environment }}" = "prod" ]; then
+                        echo "Deploying to prod"
+                    else
+                        echo "Invalid environment"
+                        exit 1
+                    fi
             - 
                 name: "Setup node"
                 uses: "actions/setup-node@v4"
