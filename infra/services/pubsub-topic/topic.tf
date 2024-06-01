@@ -4,8 +4,8 @@ provider "google" {
 }
 
 resource "google_service_account" "sa" {
-  account_id   = "cloud-run-pubsub-invoker"
-  display_name = "Cloud Run Pub/Sub Invoker"
+  account_id   = "cloud-run-pubsub-invoker-${var.environment}"
+  display_name = "Cloud Run Pub/Sub Invoker (${var.environment})"
 }
 
 resource "google_pubsub_topic" "topic" {
