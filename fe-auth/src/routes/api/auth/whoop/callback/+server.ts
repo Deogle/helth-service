@@ -8,13 +8,9 @@ export async function GET({ url }: { url: URL }) {
     if (!code) throw error(400, "no code provided");
 
     await WhoopApi.createUserAfterAuth(code);
-
-    return new Response(
-      "Authorized with Whoop. You can safely close this window."
-    );
   } catch (error: any) {
     console.error(error);
-    if (error.response.data) {
+    if (error.response?.data) {
       return error.response.data.provider === "whoop"
         ? new Response(
             "Already authorized with this provider. You can safely close this window."
@@ -25,4 +21,5 @@ export async function GET({ url }: { url: URL }) {
     }
     throw redirect(302, "/");
   }
+  throw redirect(302, "/auth-success");
 }
