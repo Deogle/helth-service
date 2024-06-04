@@ -7,7 +7,6 @@ const config = {
   secret: process.env.DISCORD_CLIENT_SECRET ?? "",
   port: process.env.PORT ?? 3000,
   apiUrl: process.env.API_URL ?? "",
-  webhookUrl: process.env.WEBHOOK_URL ?? "",
 };
 
 export default config;

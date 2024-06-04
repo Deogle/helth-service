@@ -12,21 +12,6 @@ const initializeServer = async (client: any) => {
   const app = express();
   app.use(express.json());
 
-  // //register this client with the server
-  // try {
-  //   console.log("Registering webhook with api", config.apiUrl);
-  //   await axios.post(`${config.apiUrl}/webhooks/register`, {
-  //     url: config.webhookUrl,
-  //   });
-  //   console.log("Webhook registered successfully at ", config.webhookUrl);
-  // } catch (error: AxiosError | any) {
-  //   if (error.response?.status === 304) {
-  //     console.log("Webhook already registered at", config.webhookUrl);
-  //   } else {
-  //     console.error(`Failed to register webhook: ${error.message}`);
-  //   }
-  // }
-
   app.post("/webhook", (req, res) => {
     if (!req.body) {
       console.error("Received empty request body");
