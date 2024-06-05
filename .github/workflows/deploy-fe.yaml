@@ -1,5 +1,6 @@
 name: Deploy FE
-run-name: 'FE: ${{github.actor}} deploying ${{github.ref}} to ${{github.event.inputs.environment}}'
+run-name: 'FE: ${{github.actor}} deploying ${{github.ref_name}} to ${{github.event.inputs.environment}}'
+
 on:
   workflow_dispatch:
     inputs:
