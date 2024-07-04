@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import config from "../config";
 import { CommandClient } from "../util/types";
+import logger from "../util/logger";
 
 const commandPath = path.join(__dirname, "./");
 const commandFiles = fs.readdirSync(commandPath).filter((file) => {
@@ -51,8 +52,6 @@ const registerCommands = async (client: CommandClient) => {
     );
 
   guildList.forEach(async (guildId) => {
-    console.log(`Registering app commands (/) for guild ${guildId}`);
-
     try {
       await rest.put(
         Routes.applicationGuildCommands(config.clientId, guildId),
@@ -60,12 +59,8 @@ const registerCommands = async (client: CommandClient) => {
           body: commandJSON,
         }
       );
-      console.log(
-        `Successfully registered app commands (/) for guild ${guildId}`
-      );
     } catch (error) {
-      console.error(`Failed to register app commands (/) for guild ${guildId}`);
-      console.error(error);
+      logger.error(`Failed to register app commands (/) for guild`, {guild: guildId, error})
     }
   });
 };
