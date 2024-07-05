@@ -75,7 +75,7 @@ jobs:
                 id: deploy
                 uses: google-github-actions/deploy-cloudrun@v2
                 with:
-                    image: us-docker.pkg.dev/helth-service-test/helth-ar/discord-client:latest
+                    image: us-docker.pkg.dev/helth-service-test/helth-ar/client:latest
                     service: ${{env.SERVICE_NAME}}
                     region: ${{env.REGION}}
 
