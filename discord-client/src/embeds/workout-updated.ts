@@ -1,5 +1,6 @@
 import { EmbedBuilder } from "@discordjs/builders";
 import { FitnessWorkoutData } from "../util/types";
+import logger from "../util/logger";
 
 const WorkoutUpdatedEmbed = () => {
   const StrainMap = {
@@ -18,7 +19,7 @@ const WorkoutUpdatedEmbed = () => {
   };
 
   const createEmbed = (data: FitnessWorkoutData) => {
-    console.log(data);
+    logger.info("Creating workout updated embed", { data });
     const embed = new EmbedBuilder()
       .setColor(getWorkoutColor(data.strain))
       .setTitle("Workout Updated")
