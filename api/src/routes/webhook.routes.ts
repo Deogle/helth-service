@@ -65,35 +65,35 @@ const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
   return whoopWorkoutSummary;
 };
 
-//TODO implement handler for workout updated
 const processWhoopWebhookData = async (data: WhoopWebhookData) => {
   logger.info("Received whoop webhook request", { data });
   let message: { [key: string]: any } | null = null;
-  switch (data.type) {
-    case WhoopWebhookType.RECOVERY_UPDATED:
-      message = await handleRecoveryUpdated(data);
-      break;
-    case WhoopWebhookType.RECOVERY_DELTED:
-      break;
-    case WhoopWebhookType.WORKOUT_UPDATED:
-      message = await handleWorkoutUpdated(data);
-      break;
-    case WhoopWebhookType.WORKOUT_DELETED:
-      break;
-    case WhoopWebhookType.SLEEP_UPDATED:
-      break;
-    case WhoopWebhookType.SLEEP_DELETED:
-      break;
-    default:
-      logger.error("Invalid webhook type", { type: data.type });
-      break;
+  try {
+    switch (data.type) {
+      case WhoopWebhookType.RECOVERY_UPDATED:
+        message = await handleRecoveryUpdated(data);
+        break;
+      case WhoopWebhookType.RECOVERY_DELTED:
+        break;
+      case WhoopWebhookType.WORKOUT_UPDATED:
+        message = await handleWorkoutUpdated(data);
+        break;
+      case WhoopWebhookType.WORKOUT_DELETED:
+      case WhoopWebhookType.SLEEP_UPDATED:
+      case WhoopWebhookType.SLEEP_DELETED:
+      default:
+        logger.warn("Webhook handler not implemented", { type: data.type });
+        return;
+    }
+    if (!message) {
+      logger.error("Failed to process webhook data", { data });
+      return;
+    }
+    logger.info("Publishing message", { pubsubData: message });
+    publishMessage(message);
+  } catch (error) {
+    logger.error("Error processing webhook data", { data, error });
   }
-  if (!message) {
-    logger.error("Failed to process webhook data", { data });
-    return;
-  }
-  logger.info("Publishing message", { pubsubData: message });
-  publishMessage(message);
 };
 
 const processFitbitWebhookData = async (data: FitbitWebhookData) => {
