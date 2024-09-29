@@ -4,14 +4,27 @@ import UserService from "../lib/services/user";
 import { WhoopWebhookData, WhoopWebhookType } from "../types/whoop";
 import dayjs from "dayjs";
 import DB from "../lib/db";
-import axios from "axios";
 import { FitbitWebhookData } from "../types/fitbit";
 import { publishMessage } from "../lib/services/publish";
 import logger from "../util/logger";
 
 const webhookRouter = Router();
 
-const { WHOOP_CLIENT_SECRET } = process.env as { [key: string]: string };
+interface WebhookEnvironmentVars extends NodeJS.ProcessEnv {
+  WHOOP_CLIENT_SECRET: string;
+  FITBIT_VALIDATION_CODE: string;
+}
+
+const { WHOOP_CLIENT_SECRET, FITBIT_VALIDATION_CODE } = process.env as WebhookEnvironmentVars;
+
+const missingEnvVars = ["WHOOP_CLIENT_SECRET", "FITBIT_VALIDATION_CODE"].filter(
+  (key) => !process.env[key]
+);
+
+if(missingEnvVars.length) {
+  logger.error("Missing required environment variables", { missingEnvVars });
+  process.exit(1)
+}
 
 webhookRouter.use(raw({ type: "application/json" }));
 
@@ -111,8 +124,7 @@ webhookRouter.post(
 );
 
 webhookRouter.get("/fitbit", async (req: Request, res: Response) => {
-  const validationCode =
-    "5faaae68edc10db5c2056b513578dcd16411d8dd3a0c9960425d2b13c6fe298e";
+  const validationCode = FITBIT_VALIDATION_CODE;
   const { verify } = req.query;
   if (!verify) {
     return res.status(400).json({ error: "Missing validation code" });
