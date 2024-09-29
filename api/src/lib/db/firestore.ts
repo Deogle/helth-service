@@ -57,6 +57,18 @@ const FirestoreDB = (() => {
     }
   };
 
+  const getUserByEncodedId = async (id: string) => {
+    try {
+      const doc = await db
+        .collection("users")
+        .where("encoded_id", "==", id)
+        .get();
+      return doc.docs[0].data();
+    } catch (error) {
+      logger.error(error);
+    }
+  }
+
   const getUserByWhoopId = async (id: Number) => {
     try {
       const doc = await db.collection("users").where("user_id", "==", id).get();
@@ -156,6 +168,7 @@ const FirestoreDB = (() => {
     getUserByEmail,
     getUserByRefreshToken,
     getUserByWhoopId,
+    getUserByEncodedId,
     createUser,
     deleteUser,
     getAllUsers,

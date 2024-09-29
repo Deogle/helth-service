@@ -1,4 +1,5 @@
-import { FitnessUpdateTypes, WebhookTypes } from "../../types/api";
+import { FitnessUpdateTypes, PubSubActivityMessage, PubSubBaseMessage, PubSubRecoveryMessage } from "../../types/api";
+import { FitbitSleepLog, FitbitSummary } from "../../types/fitbit";
 import { WhoopWorkoutData } from "../../types/whoop";
 import logger from "../../util/logger";
 import DB from "../db";
@@ -17,20 +18,39 @@ const defaultTokenFunction = async (email: string) => {
 const aggregateSleepScore = (stageSummary: any) => {
   return millisecondsToHours(
     stageSummary.total_light_sleep_time_milli +
-      stageSummary.total_slow_wave_sleep_time_milli +
-      stageSummary.total_rem_sleep_time_milli
+    stageSummary.total_slow_wave_sleep_time_milli +
+    stageSummary.total_rem_sleep_time_milli
   );
 };
+
+const aggregateFitbitSleepScore = (sleepData: FitbitSleepLog) => {
+  const totalMs = sleepData.sleep.reduce((acc, sleepRecord) => {
+    acc += sleepRecord.duration
+    return acc
+  }, 0)
+  return millisecondsToHours(totalMs);
+}
 
 const millisecondsToHours = (milliseconds: number) => {
   return (milliseconds / 1000 / 60 / 60).toFixed(3);
 };
 
-const whoopRecoveryToRecord = (summary: any) => {
+const fitbitSummaryToRecord = (summary: FitbitSummary): Omit<PubSubRecoveryMessage, "email" | "provider"> => {
   return {
     type: FitnessUpdateTypes.RECOVERY,
-    date: summary.created_at,
-    aggregatedScore: summary.recoveryScore.recovery_score,
+    aggregatedScore: '100',
+    date: summary.date,
+    restingHr: summary.hrData["activities-heart"][0]?.value.restingHeartRate.toFixed(0),
+    hrv: summary.hrvData.hrv[0]?.value.deepRmssd.toFixed(0),
+    sleepTime: aggregateFitbitSleepScore(summary.sleepData),
+  };
+}
+
+const whoopRecoveryToRecord = (summary: any): Omit<PubSubRecoveryMessage, "email" | "provider"> => {
+  return {
+    type: FitnessUpdateTypes.RECOVERY,
+    date: summary.created_at as string,
+    aggregatedScore: summary.recoveryScore.recovery_score as string,
     restingHr: summary.recoveryScore.resting_heart_rate.toFixed(0),
     hrv: summary.recoveryScore.hrv_rmssd_milli.toFixed(0),
     sleepTime: aggregateSleepScore(summary.sleepScore.stage_summary),
@@ -38,16 +58,17 @@ const whoopRecoveryToRecord = (summary: any) => {
 };
 
 const whoopWorkoutToRecord = (workout: WhoopWorkoutData) => {
+  const whoop = WhoopService();
   return {
     type: FitnessUpdateTypes.WORKOUT,
     date: workout.start,
-    strain: WhoopService().getWorkoutStrain(workout.score.strain),
-    activity: WhoopService().getWorkoutType(workout.sport_id),
-    duration: WhoopService().getWorkoutDuration(workout.start, workout.end),
-    calories: WhoopService().getWorkoutCalories(workout.score.kilojoule),
+    strain: whoop.getWorkoutStrain(workout.score.strain),
+    activity: whoop.getWorkoutType(workout.sport_id),
+    duration: whoop.getWorkoutDuration(workout.start, workout.end),
+    calories: whoop.getWorkoutCalories(workout.score.kilojoule),
     avgHr: workout.score.average_heart_rate.toFixed(0),
     maxHr: workout.score.max_heart_rate.toFixed(0),
-    distance: WhoopService().getWorkoutDistance(workout.score.distance_meter),
+    distance: whoop.getWorkoutDistance(workout.score.distance_meter),
   };
 };
 
@@ -59,6 +80,10 @@ const UserService = {
   async getUserByEmail(email: string) {
     const user = await DB.getUserByEmail(email);
     return user;
+  },
+  async getUserByFitbitEncodedId(encodedId: string) {
+    const user = await DB.getUserByEncodedId(encodedId);
+    return user
   },
   async getUserByWhoopId(whoopId: Number) {
     const user = await DB.getUserByWhoopId(whoopId);
@@ -81,7 +106,7 @@ const UserService = {
     const updatedUser = await DB.updateUser(user.email, updatedTokens);
     return updatedUser;
   },
-  async getActivity(email: string, date: string, activityId: string | Number) {
+  async getActivity(email: string, date: string, activityId: string | Number): Promise<PubSubActivityMessage> {
     const user = await DB.getUserByEmail(email);
     if (!user) throw new Error("User not found");
 
@@ -109,40 +134,45 @@ const UserService = {
     }
     return activity;
   },
-  async getSummary(email: string, date: string) {
+  async getSummary(email: string, date: string): Promise<PubSubRecoveryMessage> {
     const user = await DB.getUserByEmail(email);
     if (!user) throw new Error("User not found");
 
-    let summary = null;
+    let summary: PubSubRecoveryMessage | null = null;
 
     const tokenFunction = async () => {
       return defaultTokenFunction(email);
     };
 
-    try {
-      switch (user.provider) {
-        case "fitbit":
-          summary = await FitbitService({
-            access_token: user.access_token,
-            refresh_token: user.refresh_token,
-          }).getSummary(date);
-          break;
-        case "whoop":
-          const whoopSummary = await WhoopService(tokenFunction).getSummary(
-            date
-          );
-          summary = {
-            email,
-            provider: user.provider,
-            ...whoopRecoveryToRecord(whoopSummary),
-          };
-          break;
-        default:
-          throw new Error("Provider not supported");
-      }
-    } catch (error) {
-      throw error;
+    switch (user.provider) {
+      case "fitbit":
+        const fitbitSummary = await FitbitService({
+          access_token: user.access_token,
+          refresh_token: user.refresh_token,
+        }).getSummary(date);
+        summary = {
+          email,
+          provider: user.provider,
+          ...fitbitSummaryToRecord(fitbitSummary),
+        };
+        break;
+      case "whoop":
+        const whoopSummary = await WhoopService(tokenFunction).getSummary(date);
+        summary = {
+          email,
+          provider: user.provider,
+          ...whoopRecoveryToRecord(whoopSummary),
+        };
+        break;
+      default:
+        throw new Error("Provider not supported");
     }
+
+    if (!summary) {
+      logger.error("Failed to get summary", { email, date });
+      throw new Error("Failed to get summary");
+    }
+
     return summary;
   },
 };

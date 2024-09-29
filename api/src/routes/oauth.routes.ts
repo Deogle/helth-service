@@ -28,8 +28,13 @@ oauthRouter.post("/fitbit/auth", async (req, res) => {
 
     const tokens = await FitbitOauthClient.fetchTokens(code);
 
-    const fitbitUserData = await FitbitService(tokens).getUser();
-    await FitbitService(tokens).subscribeToActivities();
+    const fitbit = FitbitService(tokens);
+    const fitbitUserData = await fitbit.getUser();
+    try {
+      await fitbit.subscribe();
+    } catch (error) {
+      logger.error("Failed to create fitbit subscriptions", { email, error });
+    }
 
     const userData = {
       email,

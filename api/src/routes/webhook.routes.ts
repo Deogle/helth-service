@@ -3,10 +3,10 @@ import crypto from "crypto";
 import UserService from "../lib/services/user";
 import { WhoopWebhookData, WhoopWebhookType } from "../types/whoop";
 import dayjs from "dayjs";
-import DB from "../lib/db";
-import { FitbitWebhookData } from "../types/fitbit";
+import { FitbitCollectionType, FitbitWebhookData } from "../types/fitbit";
 import { publishMessage } from "../lib/services/publish";
 import logger from "../util/logger";
+import { PubSubMessage } from "../types/api";
 
 const webhookRouter = Router();
 
@@ -21,7 +21,7 @@ const missingEnvVars = ["WHOOP_CLIENT_SECRET", "FITBIT_VALIDATION_CODE"].filter(
   (key) => !process.env[key]
 );
 
-if(missingEnvVars.length) {
+if (missingEnvVars.length) {
   logger.error("Missing required environment variables", { missingEnvVars });
   process.exit(1)
 }
@@ -64,6 +64,13 @@ const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
   return recoverySummary;
 };
 
+const handleFitbitSleep = async (data: FitbitWebhookData) => {
+  const user = await UserService.getUserByEmail(data.ownerId);
+  if (!user) return null;
+  const fitbitSummary = await UserService.getSummary(user.email, data.date);
+  return fitbitSummary;
+}
+
 const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
   logger.info("Fetching workout", { userId: user?.email, webhookData: data });
@@ -80,7 +87,7 @@ const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
 
 const processWhoopWebhookData = async (data: WhoopWebhookData) => {
   logger.info("Received whoop webhook request", { data });
-  let message: { [key: string]: any } | null = null;
+  let message: PubSubMessage | null = null;
   try {
     switch (data.type) {
       case WhoopWebhookType.RECOVERY_UPDATED:
@@ -102,7 +109,7 @@ const processWhoopWebhookData = async (data: WhoopWebhookData) => {
       logger.error("Failed to process webhook data", { data });
       return;
     }
-    logger.info("Publishing message", { pubsubData: message });
+    logger.info("Publishing whoop message", { pubsubData: message });
     publishMessage(message);
   } catch (error) {
     logger.error("Error processing webhook data", { data, error });
@@ -111,6 +118,32 @@ const processWhoopWebhookData = async (data: WhoopWebhookData) => {
 
 const processFitbitWebhookData = async (data: FitbitWebhookData) => {
   logger.info("Received fitbit webhook request", { data });
+  const type = data.collectionType;
+  let message: PubSubMessage | null = null;
+  try {
+    switch (type) {
+      case FitbitCollectionType.activities:
+        logger.info("Received fitbit activities webhook", { data });
+        break;
+      case FitbitCollectionType.sleep:
+        message = await handleFitbitSleep(data);
+        logger.info("Received fitbit sleep webhook", { data });
+        break;
+      default:
+        logger.warn("Webhook handler not implemented", { type });
+        return;
+    }
+
+    if (!message) {
+      logger.error("Failed to process webhook data", { data });
+      return;
+    }
+
+    logger.info("Publishing fitbit message", { pubsubData: message });
+    publishMessage(message)
+  } catch (error) {
+    logger.error("Error processing webhook data", { data, error });
+  }
 };
 
 webhookRouter.post(
@@ -119,7 +152,7 @@ webhookRouter.post(
   async (req: Request, res: Response) => {
     const data = req.body as WhoopWebhookData;
     processWhoopWebhookData(data);
-    res.status(204).json({ message: "Webhook received" });
+    res.status(204).json({ message: "Whoop webhook received" });
   }
 );
 
@@ -139,23 +172,7 @@ webhookRouter.post("/fitbit", async (req: Request, res: Response) => {
   const fitbitWebhookData: FitbitWebhookData[] = req.body;
   fitbitWebhookData.forEach(processFitbitWebhookData);
 
-  res.status(204).json({ message: "Webhook received" });
-});
-
-webhookRouter.post("/register", async (req: Request, res: Response) => {
-  const { url } = req.body;
-  if (!url) return res.status(400).json({ error: "Missing url - required" });
-
-  try {
-    const isWebhookCreated = await DB.registerWebhook(url);
-    if (isWebhookCreated) {
-      return res.status(201).json({ message: "Webhook registered" });
-    }
-    return res.status(304).json({ error: "Webhook already registered" });
-  } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
+  res.status(204).json({ message: "Fitbit webhook received" });
 });
 
 export default webhookRouter;
