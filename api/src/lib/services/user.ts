@@ -94,8 +94,24 @@ const UserService = {
     return user;
   },
   async delete(email: string) {
-    const user = await DB.deleteUser(email);
-    return user;
+    const user = await DB.getUserByEmail(email);
+    if (!user) throw new Error("User not found");
+
+    logger.info("Deleting user", { email, provider: user.provider });
+    try {
+      if (user.provider === "fitbit") {
+        const fitbit = FitbitService({ access_token: user.access_token, refresh_token: user.refresh_token });
+        await fitbit.clearSubscriptions();
+        logger.info('Cleaned up fitbit subscriptions', { email, provider: user.provider });
+      }
+
+      await DB.deleteUser(email);
+      logger.info("Deleted user", { email, provider: user.provider });
+      return user;
+    } catch (error) {
+      logger.error("Failed to delete user - FIX UP NOW", { email, provider: user.provider });
+      throw new Error("Failed to delete user, please contact an administator");
+    }
   },
   async updateTokens(
     refreshToken: string,

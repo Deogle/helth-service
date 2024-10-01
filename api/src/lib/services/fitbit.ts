@@ -1,56 +1,7 @@
 import axios from "axios";
 import { FitbitOauthClient } from "../oauth";
 import logger from "../../util/logger";
-import { FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitSleepLog, FitbitSummary } from "../../types/fitbit";
-
-export type FitbitUser = {
-  age: number;
-  ambassador: boolean;
-  avatar: string;
-  avatar150: string;
-  avatar640: string;
-  averageDailySteps: number;
-  challengesBeta: boolean;
-  clockTimeDisplayFormat: string;
-  corporate: boolean;
-  corporateAdmin: boolean;
-  country: string;
-  dateOfBirth: string;
-  displayName: string;
-  displayNameSetting: string;
-  distanceUnit: string;
-  encodedId: string;
-  features: {
-    exerciseGoal: boolean;
-  };
-  foodsLocale: string;
-  fullName: string;
-  gender: string;
-  glucoseUnit: string;
-  height: number;
-  heightUnit: string;
-  isBugReportEnabled: boolean;
-  isChild: boolean;
-  isCoach: boolean;
-  languageLocale: string;
-  legalTermsAcceptRequired: boolean;
-  locale: string;
-  memberSince: string;
-  mfaEnabled: boolean;
-  offsetFromUTCMillis: number;
-  startDayOfWeek: string;
-  strideLengthRunning: number;
-  strideLengthRunningType: string;
-  strideLengthWalking: number;
-  strideLengthWalkingType: string;
-  swimUnit: string;
-  timezone: string;
-  topBadges: any[];
-  waterUnit: string;
-  waterUnitName: string;
-  weight: number;
-  weightUnit: string;
-};
+import { FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitServiceCollection, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
 
 const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   const { access_token, refresh_token } = tokens;
@@ -85,8 +36,8 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   instance.interceptors.response.use(null, handleRefreshToken);
 
   const fetchUser = async (userId?: string) => {
-    const response = await instance.get(`/user/${userId ?? "-"}/profile.json`);
-    return response.data.user as FitbitUser;
+    const response = await instance.get<{ user: FitbitUser }>(`/user/${userId ?? "-"}/profile.json`);
+    return response.data.user;
   };
 
   const fetchHrvData = async (date: string, userId?: string) => {
@@ -113,17 +64,34 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
     return response.data;
   }
 
-  const subscribeToActivities = async () => {
-    const response = await instance.post(
-      `/user/-/activities/apiSubscriptions/helth-api.json`
-    );
-    return response.data;
-  };
+  const clearSubscriptions = async () => {
+    const response = await instance.get<FitbitServiceCollection>(`/user/-/apiSubscriptions.json`);
+    const { apiSubscriptions } = response.data;
 
-  const subscribeToSleep = async () => {
-    const response = await instance.post(
-      `/user/-/sleep/apiSubscriptions/helth-api.json`
-    )
+    const collectionTypes = apiSubscriptions.map((sub) => ({ type: sub.collectionType, id: sub.subscriptionId }));
+    return Promise.all(collectionTypes.map(({ type, id }) => {
+      logger.info('Deleting subscription', { type, id });
+      return instance.delete(`/user/-/${type}/apiSubscriptions/${id}.json`);
+    }));
+  }
+
+  const getSubscriptionId = (id: string, type: string) => {
+    return `helth-api-${type}-${id}.json`;
+  }
+
+  const createSubscription = async (id: string, type: string) => {
+    const url = `/user/-/${type}/apiSubscriptions/${getSubscriptionId(id, type)}`;
+    try {
+      const response = await instance.post(url);
+      logger.info('Created subscription', { type });
+      return response.data;
+    } catch (error) {
+      logger.error('Failed to create subscription', { type, url, error });
+    }
+  }
+
+  const getSubscriptions = async () => {
+    const response = await instance.get(`/user/-/apiSubscriptions.json`);
     return response.data;
   }
 
@@ -132,8 +100,9 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
     fetchHrvData,
     fetchSleepData,
     fetchHrData,
-    subscribeToActivities,
-    subscribeToSleep
+    createSubscription,
+    clearSubscriptions,
+    getSubscriptions
   };
 };
 
@@ -162,12 +131,25 @@ const FitbitService = (tokens: {
   const subscribe = async () => {
     const fitbitApi = FitbitApi(tokens);
     const user = await fitbitApi.fetchUser();
-    const status = await Promise.all([fitbitApi.subscribeToActivities(), fitbitApi.subscribeToSleep()])
-    logger.info("Created fitbit subscriptions", { user: user.encodedId, status });
+    await fitbitApi.clearSubscriptions();
+    const collectionTypes = ['activities', 'sleep'];
+    const results = await Promise.allSettled(collectionTypes.map((type) => fitbitApi.createSubscription(user.encodedId, type)));
+    logger.info('Finished creating subscriptions', { user: user.encodedId, results: results.map((pResult) => pResult.status) });
   };
+  const getSubscriptions = async () => {
+    const fitbitApi = FitbitApi(tokens);
+    const subscriptions = await fitbitApi.getSubscriptions();
+    return subscriptions;
+  }
+  const clearSubscriptions = async () => {
+    const fitbitApi = FitbitApi(tokens);
+    return fitbitApi.clearSubscriptions();
+  }
   return {
     getUser,
     getSummary,
+    getSubscriptions,
+    clearSubscriptions,
     subscribe,
   };
 };

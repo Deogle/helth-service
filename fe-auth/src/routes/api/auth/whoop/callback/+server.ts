@@ -9,15 +9,14 @@ export async function GET({ url }: { url: URL }) {
 
     await WhoopApi.createUserAfterAuth(code);
   } catch (error: any) {
-    console.error(error);
     if (error.response?.data) {
       return error.response.data.provider === "whoop"
         ? new Response(
-            "Already authorized with this provider. You can safely close this window."
-          )
+          "Already authorized with this provider. You can safely close this window."
+        )
         : new Response(
-            "Already authorized with another provider. You can safely close this window."
-          );
+          "Already authorized with another provider. You can safely close this window."
+        );
     }
     throw redirect(302, "/");
   }

@@ -103,4 +103,65 @@ interface FitbitSummary {
   hrData: FitbitHeartRateLog;
 }
 
-export { FitbitSummary, FitbitWebhookData, FitbitCollectionType, FitbitHeartRatePeriod, FitbitSleepLog, FitbitHrvLog, FitbitHeartRateLog };
+interface FitbitSubscription {
+  collectionType: string;
+  ownerId: string;
+  ownerType: string;
+  subscriberId: string;
+  subscriptionId: string;
+}
+
+interface FitbitServiceCollection {
+  apiSubscriptions: Array<FitbitSubscription>;
+}
+
+type FitbitUser = {
+  age: number;
+  ambassador: boolean;
+  avatar: string;
+  avatar150: string;
+  avatar640: string;
+  averageDailySteps: number;
+  challengesBeta: boolean;
+  clockTimeDisplayFormat: string;
+  corporate: boolean;
+  corporateAdmin: boolean;
+  country: string;
+  dateOfBirth: string;
+  displayName: string;
+  displayNameSetting: string;
+  distanceUnit: string;
+  encodedId: string;
+  features: {
+    exerciseGoal: boolean;
+  };
+  foodsLocale: string;
+  fullName: string;
+  gender: string;
+  glucoseUnit: string;
+  height: number;
+  heightUnit: string;
+  isBugReportEnabled: boolean;
+  isChild: boolean;
+  isCoach: boolean;
+  languageLocale: string;
+  legalTermsAcceptRequired: boolean;
+  locale: string;
+  memberSince: string;
+  mfaEnabled: boolean;
+  offsetFromUTCMillis: number;
+  startDayOfWeek: string;
+  strideLengthRunning: number;
+  strideLengthRunningType: string;
+  strideLengthWalking: number;
+  strideLengthWalkingType: string;
+  swimUnit: string;
+  timezone: string;
+  topBadges: any[];
+  waterUnit: string;
+  waterUnitName: string;
+  weight: number;
+  weightUnit: string;
+};
+
+export { FitbitUser, FitbitServiceCollection, FitbitSubscription, FitbitSummary, FitbitWebhookData, FitbitCollectionType, FitbitHeartRatePeriod, FitbitSleepLog, FitbitHrvLog, FitbitHeartRateLog };
