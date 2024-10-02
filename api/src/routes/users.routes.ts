@@ -36,8 +36,13 @@ usersRouter.get("/fitbit/:email", async (req, res) => {
 
 usersRouter.get("/:email", async (req, res) => {
   const email = decodeURIComponent(req.params.email);
-  const user = await UserService.getUserByEmail(email);
-  res.status(200).json(user);
+  try {
+    const user = await UserService.getUserByEmail(email);
+    res.status(200).json(user);
+  } catch (error) {
+    logger.error(error);
+    return res.sendStatus(500)
+  }
 });
 
 usersRouter.delete("/:email", async (req, res) => {

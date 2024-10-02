@@ -164,4 +164,106 @@ type FitbitUser = {
   weightUnit: string;
 };
 
-export { FitbitUser, FitbitServiceCollection, FitbitSubscription, FitbitSummary, FitbitWebhookData, FitbitCollectionType, FitbitHeartRatePeriod, FitbitSleepLog, FitbitHrvLog, FitbitHeartRateLog };
+type FitbitActivityLevel = 'sedentary' | 'lightly' | 'fairly' | 'very';
+type TrackerFeature = 'CALORIES' | 'DISTANCE' | 'ELEVATION' | 'HEARTRATE' | 'GPS' | 'PACE' | 'VO2_MAX' | 'STEPS';
+
+interface FitbitActivitySource {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  trackerFeatures: Array<TrackerFeature>;
+}
+
+interface FitbitActivityLog {
+  logId: number
+  activityTypeId: number
+  activityName: string
+  calories: number
+  distance: number
+  steps: number
+  speed: number
+  pace: number
+  averageHeartRate: number
+  duration: number
+  activeDuration: number
+  activityLeve: Array<{
+    minutes: number
+    name: FitbitActivityLevel
+  }>
+  distanceUnit: string
+  source: FitbitActivitySource
+}
+
+type HeartRateZoneMap = {
+  1: 'Cardio';
+  2: 'Fat Burn';
+  3: 'Peak';
+  4: 'Out of Range';
+}
+
+interface HeartRateZoneReport {
+  caloriesOut: number;
+  max: number;
+  min: number;
+  minutes: number;
+  name: HeartRateZoneMap[keyof HeartRateZoneMap];
+}
+
+interface MinutesInZoneReport {
+  minutes: number;
+  zoneName: HeartRateZoneMap[keyof HeartRateZoneMap];
+  order: number;
+  type: string;
+  minuteMultiplier: number;
+}
+
+interface FitbitActivityResponse {
+  afterDate?: string;
+  beforeDate?: string;
+  sort: 'asc' | 'desc';
+  next: string;
+  previous: string;
+  limit: number;
+  offset: number;
+  activities: Array<FitbitActivityLog>;
+  manualSpecified: {
+    calories: boolean;
+    distance: boolean;
+    steps: boolean;
+  }
+  intervalWorkoutData: {
+    intervalSummary: Array<unknown>;
+    numRepeats: number;
+  }
+  heartRateZones: Array<HeartRateZoneReport>
+  activeZoneMinutes: {
+    totalMinutes: number;
+    minutesInHeartRateZones: Array<MinutesInZoneReport>
+  }
+  inProgress: boolean;
+  caloriesLink: string;
+  heartRateLink: string;
+  tcxLink: string;
+  lastModified: string;
+  startTime: string;
+  originalStartTime: string;
+  originalDuration: number;
+  elevationGain: number;
+  hasActiveZoneMinutes: boolean;
+}
+
+export {
+  FitbitUser,
+  FitbitServiceCollection,
+  FitbitSubscription,
+  FitbitSummary,
+  FitbitWebhookData,
+  FitbitCollectionType,
+  FitbitHeartRatePeriod,
+  FitbitSleepLog,
+  FitbitHrvLog,
+  FitbitHeartRateLog,
+  FitbitActivityResponse,
+  FitbitActivityLog
+};

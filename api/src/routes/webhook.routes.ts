@@ -7,6 +7,7 @@ import { FitbitCollectionType, FitbitWebhookData } from "../types/fitbit";
 import { publishMessage } from "../lib/services/publish";
 import logger from "../util/logger";
 import { PubSubMessage } from "../types/api";
+import FitbitService from "../lib/services/fitbit";
 
 const webhookRouter = Router();
 
@@ -65,10 +66,21 @@ const handleRecoveryUpdated = async (data: WhoopWebhookData) => {
 };
 
 const handleFitbitSleep = async (data: FitbitWebhookData) => {
-  const user = await UserService.getUserByEmail(data.ownerId);
+  const user = await UserService.getUserByFitbitEncodedId(data.ownerId);
   if (!user) return null;
   const fitbitSummary = await UserService.getSummary(user.email, data.date);
   return fitbitSummary;
+}
+
+const handleFitbitActivity = async (data: FitbitWebhookData) => {
+  const user = await UserService.getUserByEmail(data.ownerId);
+  if (!user) return null;
+
+  const tokens = { access_token: user.access_token, refresh_token: user.refresh_token };
+  const afterDate = dayjs(data.date).subtract(1, "day").format("YYYY-MM-DD");
+  const fitbit = FitbitService(tokens)
+  const activities = await fitbit.getActivityLogs({ afterDate });
+  return activities;
 }
 
 const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
@@ -123,6 +135,7 @@ const processFitbitWebhookData = async (data: FitbitWebhookData) => {
   try {
     switch (type) {
       case FitbitCollectionType.activities:
+        await handleFitbitActivity(data)
         logger.info("Received fitbit activities webhook", { data });
         break;
       case FitbitCollectionType.sleep:

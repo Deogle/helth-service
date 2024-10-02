@@ -1,7 +1,19 @@
 import axios from "axios";
 import { FitbitOauthClient } from "../oauth";
 import logger from "../../util/logger";
-import { FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitServiceCollection, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
+import { FitbitActivityLog, FitbitActivityResponse, FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitServiceCollection, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
+import { RequireAtLeastOne } from "../../types/util";
+import UserService from "./user";
+
+type ActivityLogsParams = {
+  afterDate: string;
+  beforeDate: string;
+  sort?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+}
+
+type GetActivityLogsParams = RequireAtLeastOne<ActivityLogsParams, 'afterDate' | 'beforeDate'>;
 
 const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   const { access_token, refresh_token } = tokens;
@@ -95,11 +107,21 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
     return response.data;
   }
 
+  const fetchActivities = async (params: GetActivityLogsParams) => {
+    const url = new URL(`/user/-/activities/list.json`)
+    Object.entries(params)
+      .filter(([, value]) => Boolean(value))
+      .forEach(([key, value]) => url.searchParams.append(key, typeof value === 'string' ? value : value.toString()));
+    const response = await instance.get<FitbitActivityResponse>(url.toString());
+    return response.data;
+  }
+
   return {
     fetchUser,
     fetchHrvData,
     fetchSleepData,
     fetchHrData,
+    fetchActivities,
     createSubscription,
     clearSubscriptions,
     getSubscriptions
@@ -145,10 +167,27 @@ const FitbitService = (tokens: {
     const fitbitApi = FitbitApi(tokens);
     return fitbitApi.clearSubscriptions();
   }
+  const getUnseenActivities = async (activities: Array<FitbitActivityLog>) => {
+    const user = await UserService.getUserByRefreshToken(tokens.refresh_token);
+    if (!user) throw new Error('User not found');
+
+    const seenActivities = user.seenActivities;
+    const unseenActivities = activities.filter((activity) => !seenActivities.includes(activity.logId));
+    return unseenActivities;
+  }
+  const getActivityLogs = async (params: GetActivityLogsParams) => {
+    const fitbitApi = FitbitApi(tokens);
+    const activityResponse = await fitbitApi.fetchActivities(params);
+    const activityList = activityResponse.activities;
+
+    const activities = await getUnseenActivities(activityList);
+    return activities;
+  }
   return {
     getUser,
     getSummary,
     getSubscriptions,
+    getActivityLogs,
     clearSubscriptions,
     subscribe,
   };

@@ -1,5 +1,11 @@
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import tz from "dayjs/plugin/timezone";
+dayjs.extend(utc);
+dayjs.extend(tz);
+
 import { FitnessUpdateTypes, PubSubActivityMessage, PubSubBaseMessage, PubSubRecoveryMessage } from "../../types/api";
-import { FitbitSleepLog, FitbitSummary } from "../../types/fitbit";
+import { FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
 import { WhoopWorkoutData } from "../../types/whoop";
 import logger from "../../util/logger";
 import DB from "../db";
@@ -35,11 +41,16 @@ const millisecondsToHours = (milliseconds: number) => {
   return (milliseconds / 1000 / 60 / 60).toFixed(3);
 };
 
-const fitbitSummaryToRecord = (summary: FitbitSummary): Omit<PubSubRecoveryMessage, "email" | "provider"> => {
+const fitbitSummaryToRecord = (user: FitbitUser, summary: FitbitSummary): Omit<PubSubRecoveryMessage, "email" | "provider"> => {
+  const fromLocalTime = (date: string) => {
+    const userTz = user.timezone;
+    return dayjs.tz(date, userTz).utc().format();
+  }
+
   return {
     type: FitnessUpdateTypes.RECOVERY,
     aggregatedScore: '100',
-    date: summary.date,
+    date: fromLocalTime(summary.sleepData.sleep[0].endTime),
     restingHr: summary.hrData["activities-heart"][0]?.value.restingHeartRate.toFixed(0),
     hrv: summary.hrvData.hrv[0]?.value.deepRmssd.toFixed(0),
     sleepTime: aggregateFitbitSleepScore(summary.sleepData),
@@ -87,6 +98,10 @@ const UserService = {
   },
   async getUserByWhoopId(whoopId: Number) {
     const user = await DB.getUserByWhoopId(whoopId);
+    return user;
+  },
+  async getUserByRefreshToken(refreshToken: string) {
+    const user = await DB.getUserByRefreshToken(refreshToken);
     return user;
   },
   async create(email: string, data: object) {
@@ -169,7 +184,7 @@ const UserService = {
         summary = {
           email,
           provider: user.provider,
-          ...fitbitSummaryToRecord(fitbitSummary),
+          ...fitbitSummaryToRecord((user as FitbitUser), fitbitSummary),
         };
         break;
       case "whoop":
