@@ -8,8 +8,6 @@ export async function GET({ url }: { url: URL }) {
     const authUrl = await FitbitApi.fetchAuthUrl(email);
     return new Response(JSON.stringify({ url: authUrl }));
   } catch (err) {
-    console.error(err);
-
     throw error(500, "failed to fetch auth code");
   }
 }

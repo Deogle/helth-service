@@ -10,6 +10,15 @@ const getDb = () => {
   return process.env.NODE_ENV === "prod" ? "prod" : "test";
 };
 
+const formatPrivateKey = (privateKey: string) => {
+  if (!privateKey) return;
+  if (process.env.NODE_ENV === "dev") {
+    return Buffer.from(privateKey, "base64").toString("utf-8");
+  } else {
+    return privateKey.replace(/\\n/g, "\n");
+  }
+}
+
 const getServiceAccount = () => {
   let serviceAccountKey;
   try {
@@ -27,7 +36,7 @@ const getServiceAccount = () => {
     return {
       projectId: GCLOUD_PROJECT_ID,
       clientEmail: GCLOUD_CLIENT_EMAIL,
-      privateKey: GCLOUD_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      privateKey: formatPrivateKey(GCLOUD_PRIVATE_KEY)
     };
   }
 };
@@ -56,6 +65,18 @@ const FirestoreDB = (() => {
       logger.error(error);
     }
   };
+
+  const getUserByEncodedId = async (id: string) => {
+    try {
+      const doc = await db
+        .collection("users")
+        .where("encodedId", "==", id)
+        .get();
+      return doc.docs[0].data();
+    } catch (error) {
+      logger.error(error);
+    }
+  }
 
   const getUserByWhoopId = async (id: Number) => {
     try {
@@ -156,6 +177,7 @@ const FirestoreDB = (() => {
     getUserByEmail,
     getUserByRefreshToken,
     getUserByWhoopId,
+    getUserByEncodedId,
     createUser,
     deleteUser,
     getAllUsers,

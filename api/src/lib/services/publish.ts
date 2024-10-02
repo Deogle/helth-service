@@ -1,5 +1,6 @@
 import { PubSub } from "@google-cloud/pubsub";
 import logger from "../../util/logger";
+import { PubSubMessage } from "../../types/api";
 
 // Create a new instance of the PubSub client
 const pubsub = new PubSub();
@@ -7,7 +8,7 @@ const { PUBSUB_TOPIC: topicName } = process.env;
 
 // Function to publish a message to a topic
 async function publishMessage(
-  message: { [key: string]: any } | string
+  message: PubSubMessage
 ): Promise<void> {
   if (!topicName) {
     throw new Error("Missing PUBSUB_TOPIC environment variable");
