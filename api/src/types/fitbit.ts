@@ -95,6 +95,7 @@ interface FitbitSleepLog {
 }
 
 type FitbitHeartRatePeriod = '1d' | '7d' | '30d' | '1w' | '1m';
+type FitbitDistanceUnit = 'Kilometer' | 'Mile';
 
 interface FitbitSummary {
   date: string
@@ -130,7 +131,7 @@ type FitbitUser = {
   dateOfBirth: string;
   displayName: string;
   displayNameSetting: string;
-  distanceUnit: string;
+  distanceUnit: FitbitDistanceUnit;
   encodedId: string;
   features: {
     exerciseGoal: boolean;
@@ -180,7 +181,7 @@ interface FitbitActivityLog {
   activityTypeId: number
   activityName: string
   calories: number
-  distance: number
+  distance?: number
   steps: number
   speed: number
   pace: number
@@ -191,8 +192,32 @@ interface FitbitActivityLog {
     minutes: number
     name: FitbitActivityLevel
   }>
-  distanceUnit: string
+  distanceUnit?: FitbitDistanceUnit
   source: FitbitActivitySource
+  manualSpecified: {
+    calories: boolean;
+    distance: boolean;
+    steps: boolean;
+  }
+  intervalWorkoutData: {
+    intervalSummary: Array<unknown>;
+    numRepeats: number;
+  }
+  heartRateZones: Array<HeartRateZoneReport>
+  activeZoneMinutes: {
+    totalMinutes: number;
+    minutesInHeartRateZones: Array<MinutesInZoneReport>
+  }
+  inProgress: boolean;
+  caloriesLink: string;
+  heartRateLink: string;
+  tcxLink: string;
+  lastModified: string;
+  startTime: string;
+  originalStartTime: string;
+  originalDuration: number;
+  elevationGain: number;
+  hasActiveZoneMinutes: boolean;
 }
 
 type HeartRateZoneMap = {
@@ -227,30 +252,6 @@ interface FitbitActivityResponse {
   limit: number;
   offset: number;
   activities: Array<FitbitActivityLog>;
-  manualSpecified: {
-    calories: boolean;
-    distance: boolean;
-    steps: boolean;
-  }
-  intervalWorkoutData: {
-    intervalSummary: Array<unknown>;
-    numRepeats: number;
-  }
-  heartRateZones: Array<HeartRateZoneReport>
-  activeZoneMinutes: {
-    totalMinutes: number;
-    minutesInHeartRateZones: Array<MinutesInZoneReport>
-  }
-  inProgress: boolean;
-  caloriesLink: string;
-  heartRateLink: string;
-  tcxLink: string;
-  lastModified: string;
-  startTime: string;
-  originalStartTime: string;
-  originalDuration: number;
-  elevationGain: number;
-  hasActiveZoneMinutes: boolean;
 }
 
 export {
@@ -265,5 +266,6 @@ export {
   FitbitHrvLog,
   FitbitHeartRateLog,
   FitbitActivityResponse,
-  FitbitActivityLog
+  FitbitActivityLog,
+  FitbitDistanceUnit
 };

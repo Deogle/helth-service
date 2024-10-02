@@ -16,7 +16,7 @@ export interface PubSubBaseMessage {
 export interface PubSubActivityMessage extends PubSubBaseMessage {
   type: FitnessUpdateTypes.WORKOUT;
   date: string;
-  strain: string;
+  strain?: string;
   activity: string;
   duration: string;
   calories: string;

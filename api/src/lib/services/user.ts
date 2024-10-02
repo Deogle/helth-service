@@ -5,12 +5,15 @@ dayjs.extend(utc);
 dayjs.extend(tz);
 
 import { FitnessUpdateTypes, PubSubActivityMessage, PubSubBaseMessage, PubSubRecoveryMessage } from "../../types/api";
-import { FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
+import { FitbitActivityLog, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
 import { WhoopWorkoutData } from "../../types/whoop";
 import logger from "../../util/logger";
 import DB from "../db";
 import FitbitService from "./fitbit";
 import WhoopService from "./whoop";
+
+type GeneratedPubSubActivityMessage = Omit<PubSubActivityMessage, "email" | "provider">;
+type GeneratedPubSubRecoveryMessage = Omit<PubSubRecoveryMessage, "email" | "provider">;
 
 const defaultTokenFunction = async (email: string) => {
   const user = await DB.getUserByEmail(email);
@@ -41,23 +44,44 @@ const millisecondsToHours = (milliseconds: number) => {
   return (milliseconds / 1000 / 60 / 60).toFixed(3);
 };
 
-const fitbitSummaryToRecord = (user: FitbitUser, summary: FitbitSummary): Omit<PubSubRecoveryMessage, "email" | "provider"> => {
-  const fromLocalTime = (date: string) => {
-    const userTz = user.timezone;
-    return dayjs.tz(date, userTz).utc().format();
-  }
+const fromLocalTime = (user: FitbitUser, date: string) => {
+  const userTz = user.timezone;
+  return dayjs.tz(date, userTz).utc().format();
+}
 
+const fitbitSummaryToRecord = (user: FitbitUser, summary: FitbitSummary): GeneratedPubSubRecoveryMessage => {
   return {
     type: FitnessUpdateTypes.RECOVERY,
     aggregatedScore: '100',
-    date: fromLocalTime(summary.sleepData.sleep[0].endTime),
+    date: fromLocalTime(user, summary.sleepData.sleep[0].endTime),
     restingHr: summary.hrData["activities-heart"][0]?.value.restingHeartRate.toFixed(0),
     hrv: summary.hrvData.hrv[0]?.value.deepRmssd.toFixed(0),
     sleepTime: aggregateFitbitSleepScore(summary.sleepData),
   };
 }
 
-const whoopRecoveryToRecord = (summary: any): Omit<PubSubRecoveryMessage, "email" | "provider"> => {
+const fitbitActivityToRecord = (user: FitbitUser, activity: FitbitActivityLog): GeneratedPubSubActivityMessage => {
+  const fitbit = FitbitService({ access_token: '', refresh_token: '' }); //TODO: fix this so we don't need to pass in empty tokens
+  try {
+    const message: Omit<PubSubActivityMessage, 'email' | 'provider'> = {
+      activity: activity.activityName,
+      date: fromLocalTime(user, activity.startTime),
+      duration: fitbit.getActivityDuration(activity.originalDuration),
+      calories: activity.calories.toFixed(0),
+      avgHr: activity.averageHeartRate.toFixed(0),
+      distance: fitbit.getActivityDistance(activity.distance, activity.distanceUnit),
+      maxHr: "N/A",
+      type: FitnessUpdateTypes.WORKOUT
+    }
+    return message
+  } catch (error) {
+    const errorMessage = `Failed to create activity message`;
+    logger.error(errorMessage, { user, error });
+    throw new Error(errorMessage);
+  }
+}
+
+const whoopRecoveryToRecord = (summary: any): GeneratedPubSubRecoveryMessage => {
   return {
     type: FitnessUpdateTypes.RECOVERY,
     date: summary.created_at as string,
@@ -68,7 +92,7 @@ const whoopRecoveryToRecord = (summary: any): Omit<PubSubRecoveryMessage, "email
   };
 };
 
-const whoopWorkoutToRecord = (workout: WhoopWorkoutData) => {
+const whoopWorkoutToRecord = (workout: WhoopWorkoutData): GeneratedPubSubActivityMessage => {
   const whoop = WhoopService();
   return {
     type: FitnessUpdateTypes.WORKOUT,
@@ -137,33 +161,45 @@ const UserService = {
     const updatedUser = await DB.updateUser(user.email, updatedTokens);
     return updatedUser;
   },
-  async getActivity(email: string, date: string, activityId: string | Number): Promise<PubSubActivityMessage> {
+  async getActivity(email: string, activityId: string | Number, activityLog?: FitbitActivityLog): Promise<PubSubActivityMessage> {
     const user = await DB.getUserByEmail(email);
     if (!user) throw new Error("User not found");
 
-    let activity;
+    let activity: PubSubActivityMessage | null = null;
 
     const tokenFunction = async () => {
       return defaultTokenFunction(email);
     };
 
-    try {
-      switch (user.provider) {
-        case "whoop":
-          activity = await WhoopService(tokenFunction).getWorkout(activityId);
-          activity = {
-            email,
-            provider: user.provider,
-            ...whoopWorkoutToRecord(activity),
-          };
-          break;
-        default:
-          throw new Error("Provider not supported");
-      }
-    } catch (error: any) {
-      logger.error(error);
+    switch (user.provider) {
+      case "whoop":
+        const workoutData = await WhoopService(tokenFunction).getWorkout(activityId);
+        activity = {
+          email,
+          provider: user.provider,
+          ...whoopWorkoutToRecord(workoutData),
+        };
+        break;
+      case "fitbit":
+        if (!activityLog) throw new Error("Activity log not provided");
+        activity = {
+          email,
+          provider: user.provider,
+          ...fitbitActivityToRecord((user as FitbitUser), activityLog)
+        };
+        break;
+      default:
+        throw new Error("Provider not supported");
     }
     return activity;
+  },
+  async markActivityAsSeen(email: string, activityId: string | Number) {
+    const user = await DB.getUserByEmail(email);
+    if (!user) throw new Error("User not found");
+
+    const seenActivities = user.seenActivities ?? [];
+    seenActivities.push(activityId);
+    await DB.updateUser(email, { seenActivities });
   },
   async getSummary(email: string, date: string): Promise<PubSubRecoveryMessage> {
     const user = await DB.getUserByEmail(email);

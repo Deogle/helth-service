@@ -32,11 +32,6 @@ const WorkoutUpdatedEmbed = () => {
           inline: true,
         },
         {
-          name: "Intensity",
-          value: getWorkoutIntensity(data.strain, data.provider),
-          inline: true,
-        },
-        {
           name: "Duration",
           value: data.duration,
           inline: true,
@@ -53,6 +48,14 @@ const WorkoutUpdatedEmbed = () => {
           inline: true,
         }
       );
+
+    if (getWorkoutIntensity(data.strain, data.provider) !== "N/A") {
+      embed.addFields({
+        name: "Intensity",
+        value: data.strain,
+        inline: true,
+      });
+    }
 
     if (parseFloat(data.distance) > 0) {
       embed.addFields({

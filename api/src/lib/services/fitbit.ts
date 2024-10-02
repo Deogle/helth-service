@@ -1,7 +1,7 @@
 import axios from "axios";
 import { FitbitOauthClient } from "../oauth";
 import logger from "../../util/logger";
-import { FitbitActivityLog, FitbitActivityResponse, FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitServiceCollection, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
+import { FitbitActivityLog, FitbitActivityResponse, FitbitDistanceUnit, FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitServiceCollection, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
 import { RequireAtLeastOne } from "../../types/util";
 import UserService from "./user";
 
@@ -14,6 +14,13 @@ type ActivityLogsParams = {
 }
 
 type GetActivityLogsParams = RequireAtLeastOne<ActivityLogsParams, 'afterDate' | 'beforeDate'>;
+
+export class NoUnseenActivitiesError extends Error {
+  constructor() {
+    super('No unseen activities');
+    this.name = 'NoUnseenActivitiesError';
+  }
+}
 
 const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   const { access_token, refresh_token } = tokens;
@@ -108,11 +115,12 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   }
 
   const fetchActivities = async (params: GetActivityLogsParams) => {
-    const url = new URL(`/user/-/activities/list.json`)
-    Object.entries(params)
-      .filter(([, value]) => Boolean(value))
-      .forEach(([key, value]) => url.searchParams.append(key, typeof value === 'string' ? value : value.toString()));
-    const response = await instance.get<FitbitActivityResponse>(url.toString());
+    const defaultActivityLogsParams: Omit<GetActivityLogsParams, 'afterDate' | 'beforeDate'> = {
+      sort: 'desc',
+      limit: 10,
+      offset: 0,
+    }
+    const response = await instance.get<FitbitActivityResponse>(`/user/-/activities/list.json`, { params: { ...defaultActivityLogsParams, ...params } });
     return response.data;
   }
 
@@ -135,7 +143,7 @@ const FitbitService = (tokens: {
   const getUser = async (userId?: string) => {
     const user = await FitbitApi(tokens).fetchUser(userId);
     return user;
-  };
+  }
   const getSummary = async (date: string): Promise<FitbitSummary> => {
     const fitbitApi = FitbitApi(tokens);
 
@@ -149,7 +157,7 @@ const FitbitService = (tokens: {
       sleepData,
       hrData,
     };
-  };
+  }
   const subscribe = async () => {
     const fitbitApi = FitbitApi(tokens);
     const user = await fitbitApi.fetchUser();
@@ -157,7 +165,7 @@ const FitbitService = (tokens: {
     const collectionTypes = ['activities', 'sleep'];
     const results = await Promise.allSettled(collectionTypes.map((type) => fitbitApi.createSubscription(user.encodedId, type)));
     logger.info('Finished creating subscriptions', { user: user.encodedId, results: results.map((pResult) => pResult.status) });
-  };
+  }
   const getSubscriptions = async () => {
     const fitbitApi = FitbitApi(tokens);
     const subscriptions = await fitbitApi.getSubscriptions();
@@ -171,23 +179,43 @@ const FitbitService = (tokens: {
     const user = await UserService.getUserByRefreshToken(tokens.refresh_token);
     if (!user) throw new Error('User not found');
 
-    const seenActivities = user.seenActivities;
+    const seenActivities = user.seenActivities ?? [];
     const unseenActivities = activities.filter((activity) => !seenActivities.includes(activity.logId));
     return unseenActivities;
   }
   const getActivityLogs = async (params: GetActivityLogsParams) => {
     const fitbitApi = FitbitApi(tokens);
     const activityResponse = await fitbitApi.fetchActivities(params);
-    const activityList = activityResponse.activities;
+    const activities = await getUnseenActivities(activityResponse.activities);
 
-    const activities = await getUnseenActivities(activityList);
+    if (!activities.length) {
+      throw new NoUnseenActivitiesError();
+    }
+
     return activities;
+  }
+  const getActivityDuration = (durationMs: number) => {
+    const durationSeconds = Math.floor(durationMs / 1000);
+    const hours = Math.floor(durationSeconds / 3600);
+    const minutes = Math.floor((durationSeconds % 3600) / 60);
+    if (hours === 0) return `${minutes}m`;
+    return `${hours}h ${minutes}m`;
+  }
+  const getActivityDistance = (distance: number | undefined, distanceUnit: FitbitDistanceUnit | undefined) => {
+    if (!distance) return '0';
+    if (distanceUnit === 'Kilometer') {
+      const distanceInMiles = distance * 0.621371;
+      return distanceInMiles.toFixed(2);
+    }
+    return distance.toFixed(2);
   }
   return {
     getUser,
     getSummary,
     getSubscriptions,
     getActivityLogs,
+    getActivityDuration,
+    getActivityDistance,
     clearSubscriptions,
     subscribe,
   };

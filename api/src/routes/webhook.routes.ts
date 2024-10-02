@@ -3,11 +3,11 @@ import crypto from "crypto";
 import UserService from "../lib/services/user";
 import { WhoopWebhookData, WhoopWebhookType } from "../types/whoop";
 import dayjs from "dayjs";
-import { FitbitCollectionType, FitbitWebhookData } from "../types/fitbit";
+import { FitbitActivityLog, FitbitCollectionType, FitbitWebhookData } from "../types/fitbit";
 import { publishMessage } from "../lib/services/publish";
 import logger from "../util/logger";
 import { PubSubMessage } from "../types/api";
-import FitbitService from "../lib/services/fitbit";
+import FitbitService, { NoUnseenActivitiesError } from "../lib/services/fitbit";
 
 const webhookRouter = Router();
 
@@ -73,14 +73,20 @@ const handleFitbitSleep = async (data: FitbitWebhookData) => {
 }
 
 const handleFitbitActivity = async (data: FitbitWebhookData) => {
-  const user = await UserService.getUserByEmail(data.ownerId);
+  const user = await UserService.getUserByFitbitEncodedId(data.ownerId);
   if (!user) return null;
 
   const tokens = { access_token: user.access_token, refresh_token: user.refresh_token };
   const afterDate = dayjs(data.date).subtract(1, "day").format("YYYY-MM-DD");
   const fitbit = FitbitService(tokens)
   const activities = await fitbit.getActivityLogs({ afterDate });
-  return activities;
+  if (activities.length > 1) {
+    logger.info("Found multiple unseen activities, reporting first", { activities: activities.map((a) => a.logId) });
+  }
+  const activity = activities[0];
+  const activityMessage = await UserService.getActivity(user.email, activity.logId, activity)
+  await UserService.markActivityAsSeen(user.email, activity.logId);
+  return activityMessage
 }
 
 const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
@@ -90,7 +96,6 @@ const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
   if (!user) return null;
   const whoopWorkoutSummary = await UserService.getActivity(
     user.email,
-    dayjs().format("YYYY-MM-DD"),
     data.id
   );
 
@@ -135,12 +140,10 @@ const processFitbitWebhookData = async (data: FitbitWebhookData) => {
   try {
     switch (type) {
       case FitbitCollectionType.activities:
-        await handleFitbitActivity(data)
-        logger.info("Received fitbit activities webhook", { data });
+        message = await handleFitbitActivity(data)
         break;
       case FitbitCollectionType.sleep:
         message = await handleFitbitSleep(data);
-        logger.info("Received fitbit sleep webhook", { data });
         break;
       default:
         logger.warn("Webhook handler not implemented", { type });
@@ -153,8 +156,12 @@ const processFitbitWebhookData = async (data: FitbitWebhookData) => {
     }
 
     logger.info("Publishing fitbit message", { pubsubData: message });
-    publishMessage(message)
+    publishMessage((message as PubSubMessage));
   } catch (error) {
+    if (error instanceof NoUnseenActivitiesError) {
+      logger.info("No unseen activities", { data });
+      return
+    }
     logger.error("Error processing webhook data", { data, error });
   }
 };
@@ -183,9 +190,10 @@ webhookRouter.get("/fitbit", async (req: Request, res: Response) => {
 
 webhookRouter.post("/fitbit", async (req: Request, res: Response) => {
   const fitbitWebhookData: FitbitWebhookData[] = req.body;
-  fitbitWebhookData.forEach(processFitbitWebhookData);
-
   res.status(204).json({ message: "Fitbit webhook received" });
+  for (const message of fitbitWebhookData) {
+    await processFitbitWebhookData(message)
+  }
 });
 
 export default webhookRouter;
