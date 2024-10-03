@@ -4,6 +4,7 @@ import logger from "../../util/logger";
 import { FitbitActivityLog, FitbitActivityResponse, FitbitDistanceUnit, FitbitHeartRateLog, FitbitHeartRatePeriod, FitbitHrvLog, FitbitServiceCollection, FitbitSleepLog, FitbitSummary, FitbitUser } from "../../types/fitbit";
 import { RequireAtLeastOne } from "../../types/util";
 import UserService from "./user";
+import dayjs from "dayjs";
 
 type ActivityLogsParams = {
   afterDate: string;
@@ -60,10 +61,11 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   };
 
   const fetchHrvData = async (date: string, userId?: string) => {
+    const lastDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD');
     const response = await instance.get(
-      `/user/${userId ?? "-"}/hrv/date/${date}.json`
+      `/user/${userId ?? "-"}/hrv/date/${lastDate}.json`
     );
-    logger.info('Fetched hrv data', { date });
+    logger.info('Fetched hrv data', { date: lastDate });
     return response.data;
   };
 
