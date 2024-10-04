@@ -22,17 +22,22 @@ const initializeServer = async (client: any) => {
       return res.status(400).json({ message: "missing message" });
     }
 
-    const messageData = parsePubSubMessage(req.body.message);
+    try {
+      const messageData = parsePubSubMessage(req.body.message);
 
-    if (messageData.type === "workout") {
-      client.onWorkoutUpdated(messageData);
-      return res.status(200).json({ message: "success" });
-    } else if (messageData.type == "recovery") {
-      client.onRecoveryUpdated(messageData);
-      return res.status(200).json({ message: "success" });
-    } else {
-      logger.warn("Received unknown event type", { type: messageData.type});
-      return res.status(400).json({ message: "unknown event type" });
+      if (messageData.type === "workout") {
+        client.onWorkoutUpdated(messageData);
+        return res.status(200).json({ message: "success" });
+      } else if (messageData.type == "recovery") {
+        client.onRecoveryUpdated(messageData);
+        return res.status(200).json({ message: "success" });
+      } else {
+        logger.warn("Received unknown event type", { type: messageData.type });
+        return res.status(400).json({ message: "unknown event type" });
+      }
+    } catch (error) {
+      logger.error("Failed to parse PubSub message", { error });
+      return res.sendStatus(500);
     }
   });
 
