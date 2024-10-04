@@ -33,10 +33,10 @@ const createEmbed = (data: FitnessRecoveryData) => {
       },
       {
         name: "Resting Heart Rate",
-        value: data.restingHr,
+        value: data.restingHr ?? "N/A",
         inline: true,
       },
-      { name: "HRV", value: data.hrv, inline: true },
+      { name: "HRV", value: data.hrv ?? "N/A", inline: true },
       {
         name: "Sleep Time",
         value: convertSleepToHours(data.sleepTime),
