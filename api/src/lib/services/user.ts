@@ -49,13 +49,17 @@ const fromLocalTime = (user: FitbitUser, date: string) => {
   return dayjs.tz(date, userTz).utc().format();
 }
 
+const getHrvScore = (hrv: FitbitSummary["hrvData"]["hrv"][0]["value"]) => {
+  return parseInt(hrv.deepRmssd.toFixed(0)) > 0 ? hrv.deepRmssd.toFixed(0) : hrv.dailyRmssd.toFixed(0);
+}
+
 const fitbitSummaryToRecord = (user: FitbitUser, summary: FitbitSummary): GeneratedPubSubRecoveryMessage => {
   return {
     type: FitnessUpdateTypes.RECOVERY,
     aggregatedScore: '100',
     date: fromLocalTime(user, summary.sleepData.sleep[0].endTime),
     restingHr: summary.hrData["activities-heart"][0]?.value.restingHeartRate.toFixed(0),
-    hrv: summary.hrvData.hrv[0]?.value.deepRmssd.toFixed(0),
+    hrv: getHrvScore(summary.hrvData.hrv[0].value),
     sleepTime: aggregateFitbitSleepScore(summary.sleepData),
   };
 }
