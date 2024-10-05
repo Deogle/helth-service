@@ -50,18 +50,24 @@ const fromLocalTime = (user: FitbitUser, date: string) => {
 }
 
 const getHrvScore = (hrv: FitbitSummary["hrvData"]["hrv"][0]["value"]) => {
+  if (!hrv) return "N/A";
   return parseInt(hrv.deepRmssd.toFixed(0)) > 0 ? hrv.deepRmssd.toFixed(0) : hrv.dailyRmssd.toFixed(0);
 }
 
 const fitbitSummaryToRecord = (user: FitbitUser, summary: FitbitSummary): GeneratedPubSubRecoveryMessage => {
-  return {
-    type: FitnessUpdateTypes.RECOVERY,
-    aggregatedScore: '100',
-    date: fromLocalTime(user, summary.sleepData.sleep[0].endTime),
-    restingHr: summary.hrData["activities-heart"][0]?.value.restingHeartRate.toFixed(0),
-    hrv: getHrvScore(summary.hrvData.hrv[0].value),
-    sleepTime: aggregateFitbitSleepScore(summary.sleepData),
-  };
+  try {
+    return {
+      type: FitnessUpdateTypes.RECOVERY,
+      aggregatedScore: '100',
+      date: fromLocalTime(user, summary.sleepData.sleep[0].endTime),
+      restingHr: summary.hrData["activities-heart"][0]?.value.restingHeartRate.toFixed(0),
+      hrv: getHrvScore(summary.hrvData.hrv?.[0]?.value),
+      sleepTime: aggregateFitbitSleepScore(summary.sleepData),
+    };
+  } catch (error) {
+    logger.error("Failed to create recovery message", { error });
+    throw new Error("Failed to create recovery message");
+  }
 }
 
 const fitbitActivityToRecord = (user: FitbitUser, activity: FitbitActivityLog): GeneratedPubSubActivityMessage => {

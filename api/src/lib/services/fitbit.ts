@@ -61,11 +61,10 @@ const FitbitApi = (tokens: { access_token: string; refresh_token: string }) => {
   };
 
   const fetchHrvData = async (date: string, userId?: string) => {
-    const lastDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD');
     const response = await instance.get(
-      `/user/${userId ?? "-"}/hrv/date/${lastDate}.json`
+      `/user/${userId ?? "-"}/hrv/date/${date}.json`
     );
-    logger.info('Fetched hrv data', { date: lastDate });
+    logger.info('Fetched hrv data', { date });
     return response.data;
   };
 
