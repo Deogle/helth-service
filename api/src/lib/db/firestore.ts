@@ -17,7 +17,7 @@ const formatPrivateKey = (privateKey: string) => {
   } else {
     return privateKey.replace(/\\n/g, "\n");
   }
-}
+};
 
 const getServiceAccount = () => {
   let serviceAccountKey;
@@ -36,7 +36,7 @@ const getServiceAccount = () => {
     return {
       projectId: GCLOUD_PROJECT_ID,
       clientEmail: GCLOUD_CLIENT_EMAIL,
-      privateKey: formatPrivateKey(GCLOUD_PRIVATE_KEY)
+      privateKey: formatPrivateKey(GCLOUD_PRIVATE_KEY),
     };
   }
 };
@@ -76,7 +76,7 @@ const FirestoreDB = (() => {
     } catch (error) {
       logger.error(error);
     }
-  }
+  };
 
   const getUserByWhoopId = async (id: Number) => {
     try {
@@ -131,6 +131,18 @@ const FirestoreDB = (() => {
       });
   };
 
+  const getSeenMessages = async () => {
+    const snapshot = await db.collection("messages").get();
+    return snapshot.docs.map((doc) => doc.data());
+  };
+
+  const createMessage = async (messageHash: string) => {
+    await db.collection("messages").add({
+      hash: messageHash,
+      createdAt: Timestamp.now(),
+    });
+  };
+
   const registerWebhook = async (url: string) => {
     const urlDocumentList = (await db.collection("webhooks").get()).docs;
     const urlList = urlDocumentList.map((doc) => doc.data().url as String);
@@ -182,6 +194,8 @@ const FirestoreDB = (() => {
     deleteUser,
     getAllUsers,
     updateUser,
+    getSeenMessages,
+    createMessage,
     registerWebhook,
     logFailedWebhook,
     logSuccessfulWebhook,

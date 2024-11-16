@@ -3,7 +3,7 @@ import crypto from "crypto";
 import UserService from "../lib/services/user";
 import { WhoopWebhookData, WhoopWebhookType } from "../types/whoop";
 import dayjs from "dayjs";
-import { FitbitActivityLog, FitbitCollectionType, FitbitWebhookData } from "../types/fitbit";
+import { FitbitCollectionType, FitbitWebhookData } from "../types/fitbit";
 import { publishMessage } from "../lib/services/publish";
 import logger from "../util/logger";
 import { PubSubMessage } from "../types/api";
@@ -16,7 +16,8 @@ interface WebhookEnvironmentVars extends NodeJS.ProcessEnv {
   FITBIT_VALIDATION_CODE: string;
 }
 
-const { WHOOP_CLIENT_SECRET, FITBIT_VALIDATION_CODE } = process.env as WebhookEnvironmentVars;
+const { WHOOP_CLIENT_SECRET, FITBIT_VALIDATION_CODE } =
+  process.env as WebhookEnvironmentVars;
 
 const missingEnvVars = ["WHOOP_CLIENT_SECRET", "FITBIT_VALIDATION_CODE"].filter(
   (key) => !process.env[key]
@@ -24,7 +25,7 @@ const missingEnvVars = ["WHOOP_CLIENT_SECRET", "FITBIT_VALIDATION_CODE"].filter(
 
 if (missingEnvVars.length) {
   logger.error("Missing required environment variables", { missingEnvVars });
-  process.exit(1)
+  process.exit(1);
 }
 
 webhookRouter.use(raw({ type: "application/json" }));
@@ -70,24 +71,33 @@ const handleFitbitSleep = async (data: FitbitWebhookData) => {
   if (!user) return null;
   const fitbitSummary = await UserService.getSummary(user.email, data.date);
   return fitbitSummary;
-}
+};
 
 const handleFitbitActivity = async (data: FitbitWebhookData) => {
   const user = await UserService.getUserByFitbitEncodedId(data.ownerId);
   if (!user) return null;
 
-  const tokens = { access_token: user.access_token, refresh_token: user.refresh_token };
+  const tokens = {
+    access_token: user.access_token,
+    refresh_token: user.refresh_token,
+  };
   const afterDate = dayjs(data.date).subtract(1, "day").format("YYYY-MM-DD");
-  const fitbit = FitbitService(tokens)
+  const fitbit = FitbitService(tokens);
   const activities = await fitbit.getActivityLogs({ afterDate });
   if (activities.length > 1) {
-    logger.info("Found multiple unseen activities, reporting first", { activities: activities.map((a) => a.logId) });
+    logger.info("Found multiple unseen activities, reporting first", {
+      activities: activities.map((a) => a.logId),
+    });
   }
   const activity = activities[0];
-  const activityMessage = await UserService.getActivity(user.email, activity.logId, activity)
+  const activityMessage = await UserService.getActivity(
+    user.email,
+    activity.logId,
+    activity
+  );
   await UserService.markActivityAsSeen(user.email, activity.logId);
-  return activityMessage
-}
+  return activityMessage;
+};
 
 const handleWorkoutUpdated = async (data: WhoopWebhookData) => {
   const user = await UserService.getUserByWhoopId(data.user_id);
@@ -140,7 +150,7 @@ const processFitbitWebhookData = async (data: FitbitWebhookData) => {
   try {
     switch (type) {
       case FitbitCollectionType.activities:
-        message = await handleFitbitActivity(data)
+        message = await handleFitbitActivity(data);
         break;
       case FitbitCollectionType.sleep:
         message = await handleFitbitSleep(data);
@@ -156,11 +166,11 @@ const processFitbitWebhookData = async (data: FitbitWebhookData) => {
     }
 
     logger.info("Publishing fitbit message", { pubsubData: message });
-    publishMessage((message as PubSubMessage));
+    publishMessage(message as PubSubMessage);
   } catch (error) {
     if (error instanceof NoUnseenActivitiesError) {
       logger.info("No unseen activities", { data });
-      return
+      return;
     }
     logger.error("Error processing webhook data", { data, error });
   }
@@ -192,7 +202,7 @@ webhookRouter.post("/fitbit", async (req: Request, res: Response) => {
   const fitbitWebhookData: FitbitWebhookData[] = req.body;
   res.status(204).json({ message: "Fitbit webhook received" });
   for (const message of fitbitWebhookData) {
-    await processFitbitWebhookData(message)
+    await processFitbitWebhookData(message);
   }
 });
 
