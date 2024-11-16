@@ -30,7 +30,7 @@ async function publishMessage(message: PubSubMessage): Promise<void> {
     throw new Error("Missing PUBSUB_TOPIC environment variable");
   }
   if (await checkIfDuplicateMessage(message)) {
-    logger.info("Ignoring duplicate message", { message });
+    logger.info("Ignoring duplicate message", { pubsubData: message });
     return;
   }
   try {
