@@ -1,4 +1,4 @@
-FROM node:18 as build
+FROM node:18 AS build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . ./
 RUN npm run build
 
-FROM node:18-alpine as deploy-node
+FROM node:18-alpine AS deploy-node
 WORKDIR /app
 RUN rm -rf ./*
 COPY --from=build /app/package.json .
