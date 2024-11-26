@@ -57,7 +57,6 @@ const WhoopOauthClient = {
       .join(" ")}`;
   },
   refreshAccessToken: async (refreshToken: string) => {
-    logger.debug("Refreshing whoop access token");
     const tokenUrl = WhoopOauthClient.client.settings.tokenEndpoint;
     if (!tokenUrl) throw new Error("No token endpoint found");
 
