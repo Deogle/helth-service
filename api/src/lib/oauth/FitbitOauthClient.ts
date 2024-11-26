@@ -71,6 +71,7 @@ const FitbitOauthClient = {
       .join(" ")}`;
   },
   refreshAccessToken: async (refreshToken: string) => {
+    logger.debug("Refreshing fitbit access token");
     const tokenUrl = FitbitOauthClient.client.settings.tokenEndpoint;
     if (!tokenUrl) throw new Error("No token endpoint found");
 
