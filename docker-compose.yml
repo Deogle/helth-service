@@ -12,6 +12,7 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=3000"
     environment:
       - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
       - PORT=3000
       - WHOOP_CLIENT_ID=${WHOOP_CLIENT_ID}
       - WHOOP_CLIENT_SECRET=${WHOOP_CLIENT_SECRET}
