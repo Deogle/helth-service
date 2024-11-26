@@ -1,4 +1,3 @@
-import FirestoreDB from "./firestore";
 import PostgresDB from "./postgres";
 
 export interface HelthDbService {

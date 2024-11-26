@@ -2,10 +2,10 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import { HelthDbService } from "..";
 import { eq, sql } from "drizzle-orm";
+import logger from "../../../util/logger";
 
 const db = drizzle({
   connection: process.env.DATABASE_URL!,
-  casing: "snake_case",
   schema,
 });
 
@@ -20,7 +20,7 @@ const PostgresDB = (): HelthDbService => {
     return user;
   };
 
-  const createUser = async (email: string, data: { [k: string]: any }) => {
+  const createUser = async (email: string, data: Record<string, any>) => {
     const user: CreateUser = {
       email,
       provider: data.provider,
@@ -28,6 +28,10 @@ const PostgresDB = (): HelthDbService => {
       refreshToken: data.refreshToken,
       providerData: data,
     };
+
+    delete data.provider;
+    delete data.accessToken;
+    delete data.refreshToken;
 
     return db.insert(schema.userTable).values(user);
   };
@@ -41,7 +45,7 @@ const PostgresDB = (): HelthDbService => {
 
   const getUserByWhoopId = async (id: Number) => {
     const query = sql`select * from ${schema.userTable} 
-        where ${schema.userTable.providerData}->encodedId = ${id} limit 1`;
+        where ${schema.userTable.providerData}->'user_id' = ${id} limit 1`;
     const res = await db.execute(query);
     return res.rows[0];
   };
