@@ -16,8 +16,8 @@ export interface HelthDbService {
   deleteUser: (email: string) => Promise<any>;
   getAllUsers: () => Promise<{ [key: string]: any }[]>;
   updateUser: (email: string, data: object) => Promise<any>;
-  getSeenMessages?: (email: string) => Promise<any>;
-  createMessage?: (email: string, data: object) => Promise<any>;
+  getSeenMessages?: () => Promise<any>;
+  createMessage?: (message: string) => Promise<any>;
 }
 
 export default PostgresDB;
