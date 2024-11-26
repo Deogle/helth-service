@@ -2,10 +2,10 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import { HelthDbService } from "..";
 import { eq, sql } from "drizzle-orm";
-import logger from "../../../util/logger";
 
 const db = drizzle({
   connection: process.env.DATABASE_URL!,
+  casing: "snake_case",
   schema,
 });
 
@@ -24,35 +24,35 @@ const PostgresDB = (): HelthDbService => {
     const user: CreateUser = {
       email,
       provider: data.provider,
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-      providerData: data,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      provider_data: data,
     };
 
     delete data.provider;
-    delete data.accessToken;
-    delete data.refreshToken;
+    delete data.access_token;
+    delete data.refresh_token;
 
     return db.insert(schema.userTable).values(user);
   };
 
   const getUserByEncodedId = async (id: string) => {
     const query = sql`select * from ${schema.userTable} 
-        where ${schema.userTable.providerData}->encodedId = ${id} limit 1`;
+        where ${schema.userTable.provider_data}->encodedId = ${id} limit 1`;
     const res = await db.execute(query);
     return res.rows[0];
   };
 
   const getUserByWhoopId = async (id: Number) => {
     const query = sql`select * from ${schema.userTable} 
-        where ${schema.userTable.providerData}->'user_id' = ${id} limit 1`;
+        where ${schema.userTable.provider_data}->'user_id' = ${id} limit 1`;
     const res = await db.execute(query);
     return res.rows[0];
   };
 
   const getUserByRefreshToken = async (refreshToken: string) => {
     return db.query.userTable.findFirst({
-      where: (user, { eq }) => eq(user.refreshToken, refreshToken),
+      where: (user, { eq }) => eq(user.refresh_token, refreshToken),
     });
   };
 

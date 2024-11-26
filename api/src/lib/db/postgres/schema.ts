@@ -11,11 +11,11 @@ const userTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   email: varchar({ length: 255 }).notNull().unique(),
   provider: varchar({ length: 255 }).notNull(),
-  createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow(),
-  accessToken: varchar({ length: 255 }).notNull(),
-  refreshToken: varchar({ length: 255 }).notNull(),
-  providerData: jsonb().notNull().default({}),
+  created_at: timestamp().defaultNow(),
+  updated_at: timestamp().defaultNow(),
+  access_token: varchar({ length: 255 }).notNull(),
+  refresh_token: varchar({ length: 255 }).notNull(),
+  provider_data: jsonb().notNull().default({}),
 });
 
 export { userTable };
