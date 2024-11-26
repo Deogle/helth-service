@@ -85,7 +85,8 @@ oauthRouter.post("/whoop/auth", async (req, res) => {
 
   const userData = {
     ...whoopUserData,
-    ...tokens,
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
     provider: "whoop",
   };
 
