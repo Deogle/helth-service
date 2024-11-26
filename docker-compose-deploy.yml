@@ -2,8 +2,6 @@ services:
   api:
     container_name: api
     image: dylanogle/helth-api
-    ports:
-      - 3000
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.helth.dev`)"
@@ -21,8 +19,6 @@ services:
   discord-client:
     container_name: discord-client
     image: dylanogle/helth-discord-client
-    ports:
-      - 3001
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`discord.helth.dev`)"
@@ -36,8 +32,6 @@ services:
   frontend:
     container_name: helth-frontend
     image: dylanogle/helth-fe
-    ports:
-      - 3002
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`helth.dev`)"

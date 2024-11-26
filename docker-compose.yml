@@ -5,7 +5,7 @@ services:
       context: ./api/
       dockerfile: Dockerfile
     ports:
-      - 3000
+      - 3000:3000
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.helth.dev`)"
@@ -27,7 +27,7 @@ services:
       context: ./discord-client/
       dockerfile: Dockerfile
     ports:
-      - 3001
+      - 3001:3001
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`discord.helth.dev`)"
@@ -44,7 +44,7 @@ services:
       context: ./fe-auth/
       dockerfile: Dockerfile
     ports:
-      - 3002
+      - 3002:3002
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`helth.dev`)"
