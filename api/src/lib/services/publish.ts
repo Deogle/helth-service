@@ -17,7 +17,9 @@ async function checkIfDuplicateMessage(
   }
 
   const previousMessages = await MessageService.getMessages();
-  const seen = previousMessages.map((msg) => msg.hash).includes(messageHash);
+  const seen = previousMessages
+    .map((msg: any) => msg.hash)
+    .includes(messageHash);
   if (seen) {
     return true;
   }
