@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 import { readFileSync } from "fs";
 import logger from "../../util/logger";
+import { HelthDbService } from ".";
 
 let initialized = false;
 
@@ -50,7 +51,7 @@ const initializeFirestoreAppCredentials = () => {
   initialized = true;
 };
 
-const FirestoreDB = (() => {
+const FirestoreDB = ((): HelthDbService => {
   if (!initialized) {
     initializeFirestoreAppCredentials();
   }
@@ -143,48 +144,6 @@ const FirestoreDB = (() => {
     });
   };
 
-  const registerWebhook = async (url: string) => {
-    const urlDocumentList = (await db.collection("webhooks").get()).docs;
-    const urlList = urlDocumentList.map((doc) => doc.data().url as String);
-
-    if (urlList.includes(url)) return false;
-
-    await db.collection("webhooks").add({
-      url,
-      createdAt: Timestamp.now(),
-      lastSuccess: null,
-      lastFailure: null,
-      failureCount: 0,
-    });
-
-    logger.info(`Registered webhook`, { url });
-
-    return true;
-  };
-
-  const logSuccessfulWebhook = async (url: string) => {
-    const doc = await db.collection("webhooks").where("url", "==", url).get();
-    return await doc.docs?.[0]?.ref.update({
-      lastSuccess: FieldValue.serverTimestamp(),
-    });
-  };
-
-  const logFailedWebhook = async (url: string) => {
-    logger.error(`Failed to push webhook`, { url });
-    const doc = await db.collection("webhooks").where("url", "==", url).get();
-    await doc.docs?.[0]?.ref.update({
-      lastFailure: FieldValue.serverTimestamp(),
-      failureCount: FieldValue.increment(1),
-    });
-    if (doc.docs?.[0]?.data().failureCount >= 5) {
-      logger.info(`Deleting webhook`, {
-        webhookurl: doc.docs?.[0]?.data().url,
-      });
-      await doc.docs?.[0]?.ref.delete();
-    }
-    return;
-  };
-
   return {
     getUserByEmail,
     getUserByRefreshToken,
@@ -196,9 +155,6 @@ const FirestoreDB = (() => {
     updateUser,
     getSeenMessages,
     createMessage,
-    registerWebhook,
-    logFailedWebhook,
-    logSuccessfulWebhook,
   };
 })();
 
