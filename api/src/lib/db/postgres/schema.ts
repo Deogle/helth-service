@@ -13,8 +13,8 @@ const userTable = pgTable("users", {
   provider: varchar({ length: 255 }).notNull(),
   created_at: timestamp().defaultNow(),
   updated_at: timestamp().defaultNow(),
-  access_token: varchar({ length: 255 }).notNull(),
-  refresh_token: varchar({ length: 255 }).notNull(),
+  access_token: varchar().notNull(),
+  refresh_token: varchar().notNull(),
   provider_data: jsonb().notNull().default({}),
 });
 

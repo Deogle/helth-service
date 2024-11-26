@@ -37,15 +37,17 @@ const PostgresDB = (): HelthDbService => {
   };
 
   const getUserByEncodedId = async (id: string) => {
+    const objPath = { encodedId: id };
     const query = sql`select * from ${schema.userTable} 
-        where ${schema.userTable.provider_data}->encodedId = ${id} limit 1`;
+        where ${schema.userTable.provider_data} @> ${objPath} limit 1`;
     const res = await db.execute(query);
     return res.rows[0];
   };
 
   const getUserByWhoopId = async (id: Number) => {
+    const objPath = { user_id: id };
     const query = sql`select * from ${schema.userTable} 
-        where ${schema.userTable.provider_data}->'user_id' = ${id} limit 1`;
+        where ${schema.userTable.provider_data} @> ${objPath} limit 1`;
     const res = await db.execute(query);
     return res.rows[0];
   };
