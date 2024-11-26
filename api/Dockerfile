@@ -17,4 +17,4 @@ RUN apk --no-cache add curl
 
 RUN npm ci --omit=dev
 EXPOSE 3000
-CMD ["node","index.js"]
+CMD ["node","src/index.js"]
