@@ -27,6 +27,7 @@
     "firebase-admin": "^12.7.0",
     "node-postgres": "^0.6.2",
     "pg": "^8.13.1",
+    "redis": "^4.7.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {

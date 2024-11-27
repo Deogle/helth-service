@@ -13,6 +13,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       - PORT=3000
       - WHOOP_CLIENT_ID=${WHOOP_CLIENT_ID}
       - WHOOP_CLIENT_SECRET=${WHOOP_CLIENT_SECRET}
