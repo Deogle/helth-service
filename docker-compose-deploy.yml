@@ -2,6 +2,7 @@ services:
   api:
     container_name: api
     image: dylanogle/helth-api
+    restart: always
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.helth.dev`)"
@@ -21,6 +22,7 @@ services:
   discord-client:
     container_name: discord-client
     image: dylanogle/helth-discord-client
+    restart: always
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`discord.helth.dev`)"
@@ -35,6 +37,7 @@ services:
   frontend:
     container_name: helth-frontend
     image: dylanogle/helth-fe
+    restart: always
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`helth.dev`)"
