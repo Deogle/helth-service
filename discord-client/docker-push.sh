@@ -1,6 +1,5 @@
-# docker tag discord-client:dev us-docker.pkg.dev/helth-service-test/helth-ar/client
-# docker push us-docker.pkg.dev/helth-service-test/helth-ar/client 
+commit_tag=$(git rev-parse --short HEAD)
 
-docker tag discord-client:dev dylanogle/helth-discord-client:latest
-docker push dylanogle/helth-discord-client:latest
+docker tag discord-client:dev dylanogle/helth-discord-client:$commit_tag
+docker push dylanogle/helth-discord-client:$commit_tag
 
