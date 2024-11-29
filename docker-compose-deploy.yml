@@ -8,6 +8,8 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=3000"
     environment:
       - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       - PORT=3000
       - WHOOP_CLIENT_ID=${WHOOP_CLIENT_ID}
       - WHOOP_CLIENT_SECRET=${WHOOP_CLIENT_SECRET}
@@ -29,6 +31,7 @@ services:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
       - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - REDIS_URL=${REDIS_URL}
   frontend:
     container_name: helth-frontend
     image: dylanogle/helth-fe
@@ -40,3 +43,17 @@ services:
       - NODE_ENV=${NODE_ENV}
       - PORT=3002
       - API_URL=${API_URL}
+  postgres:
+    container_name: postgres
+    image: postgres:17.2
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  redis:
+    container_name: redis
+    image: redis:7.4
+    ports:
+      - 6379:6379
+    restart: always
