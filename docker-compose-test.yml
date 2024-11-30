@@ -1,0 +1,83 @@
+services:
+  api:
+    container_name: api
+    image: dylanogle/helth-api
+    restart: always
+    networks:
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.helth_api.entrypoints=web-external"
+      - "traefik.http.routers.helth_api.rule=Host(`api-test.helth.dev`)"
+      - "traefik.http.routers.helth_api.service=helth_api"
+      - "traefik.http.services.helth_api.loadbalancer.server.port=3123"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - PORT=3123
+      - WHOOP_CLIENT_ID=${WHOOP_CLIENT_ID}
+      - WHOOP_CLIENT_SECRET=${WHOOP_CLIENT_SECRET}
+      - WHOOP_REDIRECT_URL=${WHOOP_REDIRECT_URL}
+      - FITBIT_VALIDATION_CODE=${FITBIT_VALIDATION_CODE}
+      - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
+      - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
+      - FITBIT_REDIRECT_URL=${FITBIT_REDIRECT_URL}
+  discord-client:
+    container_name: discord-client
+    image: dylanogle/helth-discord-client
+    restart: always
+    networks:
+      - traefik_default
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=3001
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+  frontend:
+    container_name: frontend
+    image: dylanogle/helth-fe
+    restart: always
+    networks:
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.helth_fe.entrypoints=web-external"
+      - "traefik.http.routers.helth_fe.rule=Host(`fe-test.helth.dev`)"
+      - "traefik.http.routers.helth_fe.service=helth_fe"
+      - "traefik.http.services.helth_fe.loadbalancer.server.port=3002"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=3002
+      - API_URL=${API_URL}
+  postgres:
+    container_name: postgres
+    image: postgres:17.2
+    ports:
+      - 5432:5432
+    restart: always
+    volumes:
+      - "./postgres-data:/var/lib/postgresql/data"
+    networks:
+      - traefik_default
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.helth_postgres.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.helth_postgres.entrypoints=db"
+      - "traefik.tcp.services.helth_postgres.loadbalancer.server.port=5432"
+  redis:
+    container_name: redis
+    image: redis:7.4
+    networks:
+      - traefik_default
+    ports:
+      - 6379:6379
+    restart: always
+networks:
+  traefik_default:
+    external: true
