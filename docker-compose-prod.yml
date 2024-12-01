@@ -23,6 +23,7 @@ services:
       - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
       - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
       - FITBIT_REDIRECT_URL=${FITBIT_REDIRECT_URL}
+      - PROM_BASIC_AUTH=${PROM_BASIC_AUTH}
   discord-client:
     container_name: discord-client
     image: dylanogle/helth-discord-client
