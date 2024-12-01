@@ -18,5 +18,4 @@ COPY --from=build /app/build .
 RUN apk --no-cache add curl
 
 RUN npm ci --omit=dev
-EXPOSE 3000
 CMD ["node", "-r", "dotenv/config", "index.js"]

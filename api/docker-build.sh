@@ -1,8 +1,5 @@
 #!/bin/bash
-
-arg=$1
-
-if [ "$arg" == "test" ]; then
+if [ "$1" == "deploy" ]; then
   docker build -t helth-api:dev . --no-cache=true --platform linux/amd64 
   exit 0
 fi
