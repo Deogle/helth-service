@@ -4,6 +4,6 @@ for service_dir in "${service_dirs[@]}"
 do
   cd $service_dir
   ./docker-build.sh deploy
-  ./docker-push.sh
+  ./docker-push.sh $1
   cd ..
 done
