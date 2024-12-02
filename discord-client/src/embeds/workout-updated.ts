@@ -1,4 +1,4 @@
-import { EmbedBuilder } from "@discordjs/builders";
+import { EmbedBuilder } from "discord.js";
 import { FitnessWorkoutData } from "../util/types";
 import logger from "../util/logger";
 

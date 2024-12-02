@@ -1,52 +1,20 @@
-import { PubSub } from "@google-cloud/pubsub";
 import logger from "../../util/logger";
 import { PubSubMessage } from "../../types/api";
-import { MessageService } from "./messages";
+import { createClient } from "redis";
 
-// Create a new instance of the PubSub client
-const pubsub = new PubSub();
-const { PUBSUB_TOPIC: topicName } = process.env;
-
-//Function to prevent publishing a duplicate message
-async function checkIfDuplicateMessage(
-  message: PubSubMessage
-): Promise<boolean> {
-  const messageHash = Buffer.from(JSON.stringify(message)).toString("base64");
-  if (!messageHash) {
-    throw new Error("Error hashing message");
-  }
-
-  const previousMessages = await MessageService.getMessages();
-  const seen = previousMessages.map((msg) => msg.hash).includes(messageHash);
-  if (seen) {
-    return true;
-  }
-  await MessageService.createSeenMessage(messageHash);
-  return false;
-}
+const PUBSUB_CHANNEL = "pubsub:message";
 
 async function publishMessage(message: PubSubMessage): Promise<void> {
-  if (!topicName) {
-    throw new Error("Missing PUBSUB_TOPIC environment variable");
-  }
-  if (await checkIfDuplicateMessage(message)) {
-    logger.info("Ignoring duplicate message", { pubsubData: message });
-    return;
-  }
-  try {
-    const topic = pubsub.topic(topicName);
+  const client = createClient({
+    url: process.env.REDIS_URL!,
+  });
 
-    await topic.publishMessage({
-      json: message,
-    });
+  client.on("error", (err) => console.log("redis client erro", err));
+  await client.connect();
+  await client.publish(PUBSUB_CHANNEL, JSON.stringify(message));
+  logger.info("published message to redis pubsub");
 
-    logger.info("Published message", {
-      topic: topic.name,
-      pubsubData: message,
-    });
-  } catch (error) {
-    logger.error("Error publishing message", error);
-  }
+  await client.quit();
 }
 
 export { publishMessage };

@@ -1,4 +1,4 @@
-FROM node:18 as build
+FROM node:18 AS build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY . ./
 RUN npm ci
 RUN npm run build
 
-FROM node:18-alpine as deploy
+FROM node:18-alpine AS deploy
 COPY --from=build /app/package.json .
 COPY --from=build /app/package-lock.json .
 COPY --from=build /app/build .
@@ -16,5 +16,4 @@ COPY --from=build /app/build .
 RUN apk --no-cache add curl
 
 RUN npm ci --omit=dev
-EXPOSE 3000
 CMD ["node","index.js"]
