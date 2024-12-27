@@ -1,4 +1,4 @@
-import { EmbedBuilder } from "@discordjs/builders";
+import { EmbedBuilder } from "discord.js";
 import { FitnessRecoveryData } from "../util/types";
 
 const RecoveryColorMap = {
@@ -19,7 +19,7 @@ const convertSleepToHours = (hours: string) => {
   return `${Math.floor(sleepTime)}h ${minutes}m`;
 };
 
-const createEmbed = (data: FitnessRecoveryData) => {
+const createEmbed = (data: FitnessRecoveryData): EmbedBuilder => {
   const embed = new EmbedBuilder()
     .setColor(getRecoveryColor(data.aggregatedScore))
     .setTitle("Fitness Recovery Update")
