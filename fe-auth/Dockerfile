@@ -1,4 +1,4 @@
-FROM node:18 AS build
+FROM node:18 as build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . ./
 RUN npm run build
 
-FROM node:18-alpine AS deploy-node
+FROM node:18-alpine as deploy-node
 WORKDIR /app
 RUN rm -rf ./*
 COPY --from=build /app/package.json .
@@ -18,4 +18,5 @@ COPY --from=build /app/build .
 RUN apk --no-cache add curl
 
 RUN npm ci --omit=dev
+EXPOSE 3000
 CMD ["node", "-r", "dotenv/config", "index.js"]

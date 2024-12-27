@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { json } from "body-parser";
-import prom from "express-prometheus-middleware";
 import usersRouter from "./routes/users.routes";
 import oauthRouter from "./routes/oauth.routes";
 import summaryRouter from "./routes/summary.routes";
@@ -15,17 +14,6 @@ import logger from "./util/logger";
 const app = express();
 
 app.use(json());
-
-const promOptions = {
-  metricsPath: "/metrics",
-  collectDefaultMetrics: true,
-  requestDurationBuckets: [0.1, 0.5, 1, 1.5],
-  authenticate: (req: express.Request) =>
-    req.headers.authorization === `Basic ${process.env.PROM_BASIC_AUTH}`,
-};
-const promMid = prom(promOptions);
-
-app.use(promMid);
 
 app.enable("trust proxy");
 

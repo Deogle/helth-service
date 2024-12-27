@@ -1,22 +1,3 @@
-import PostgresDB from "./postgres";
+import FirestoreDB from "./firestore";
 
-export interface HelthDbService {
-  getUserByEmail: (
-    email: string
-  ) => Promise<{ [key: string]: any } | undefined>;
-  getUserByEncodedId: (
-    id: string
-  ) => Promise<{ [key: string]: any } | undefined>;
-  getUserByWhoopId: (id: Number) => Promise<{ [key: string]: any } | undefined>;
-  getUserByRefreshToken: (
-    refreshToken: string
-  ) => Promise<{ [key: string]: any } | undefined>;
-  createUser: (email: string, data: { [key: string]: any }) => Promise<any>;
-  deleteUser: (email: string) => Promise<any>;
-  getAllUsers: () => Promise<{ [key: string]: any }[]>;
-  updateUser: (email: string, data: object) => Promise<any>;
-  getSeenMessages?: () => Promise<any>;
-  createMessage?: (message: string) => Promise<any>;
-}
-
-export default PostgresDB;
+export default FirestoreDB;

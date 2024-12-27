@@ -1,8 +1,9 @@
+// Require the necessary discord.js classes
 import { Client, GatewayIntentBits } from "discord.js";
 import { registerCommands } from "./commands";
 import { registerEvents } from "./events";
 import config from "./config";
-import { initRedisSubscriber } from "./redis";
+import { initializeServer } from "./http";
 
 const { token } = config;
 
@@ -14,5 +15,5 @@ const { token } = config;
   await client.login(token);
   registerCommands(client);
 
-  await initRedisSubscriber(client);
+  await initializeServer(client);
 })();

@@ -2,10 +2,10 @@ import DB from "../db";
 
 const MessageService = {
   async getMessages() {
-    return DB.getSeenMessages?.();
+    return DB.getSeenMessages();
   },
   async createSeenMessage(messageHash: string) {
-    return DB.createMessage?.(messageHash);
+    return DB.createMessage(messageHash);
   },
 };
 
