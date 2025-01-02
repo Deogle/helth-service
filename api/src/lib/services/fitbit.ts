@@ -222,7 +222,7 @@ const FitbitService = (tokens: {
     const user = await UserService.getUserByRefreshToken(tokens.refresh_token);
     if (!user) throw new Error("User not found");
 
-    const seenActivities = user.seenActivities ?? [];
+    const seenActivities = user.seen_activities ?? [];
     const unseenActivities = activities.filter(
       (activity) => !seenActivities.includes(activity.logId)
     );
