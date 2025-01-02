@@ -16,6 +16,7 @@ const userTable = pgTable("users", {
   access_token: varchar().notNull(),
   refresh_token: varchar().notNull(),
   provider_data: jsonb().notNull().default({}),
+  seen_activities: jsonb().notNull().default([]),
 });
 
 export { userTable };

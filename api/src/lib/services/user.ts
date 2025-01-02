@@ -255,9 +255,9 @@ const UserService = {
     const user = await DB.getUserByEmail(email);
     if (!user) throw new Error("User not found");
 
-    const seenActivities = user.seenActivities ?? [];
+    const seenActivities = user.seen_activities ?? [];
     seenActivities.push(activityId);
-    await DB.updateUser(email, { seenActivities });
+    await DB.updateUser(email, { seen_activities: seenActivities });
   },
   async getSummary(
     email: string,

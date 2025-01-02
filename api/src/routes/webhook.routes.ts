@@ -133,7 +133,7 @@ const processWhoopWebhookData = async (data: WhoopWebhookData) => {
         return;
     }
     if (!message) {
-      logger.error("Failed to process webhook data", { data });
+      logger.error("Failed to process whoop webhook data", { data });
       return;
     }
     logger.info("Publishing whoop message", { pubsubData: message });
@@ -161,7 +161,7 @@ const processFitbitWebhookData = async (data: FitbitWebhookData) => {
     }
 
     if (!message) {
-      logger.error("Failed to process webhook data", { data });
+      logger.error("Failed to process fitbit webhook data", { data });
       return;
     }
 
