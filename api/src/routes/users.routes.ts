@@ -5,19 +5,14 @@ import logger from "../util/logger";
 
 const usersRouter = Router();
 
-usersRouter.get("/", async (_req, res) => {
-  const users = await UserService.getAllUsers();
-  res.status(200).json(users);
-});
-
 usersRouter.get("/fitbit/:email", async (req, res) => {
-  const authHeader = req.headers['x-auth-header'];
+  const authHeader = req.headers["x-auth-header"];
 
-  if (authHeader !== 'auth') {
+  if (authHeader !== "auth") {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  logger.warn('Access to /fitbit/:email endpoint', { email: req.params.email });
+  logger.warn("Access to /fitbit/:email endpoint", { email: req.params.email });
 
   const email = decodeURIComponent(req.params.email);
   const user = await UserService.getUserByEmail(email);
@@ -27,7 +22,7 @@ usersRouter.get("/fitbit/:email", async (req, res) => {
   const fitbit = FitbitService({
     access_token: user.access_token,
     refresh_token: user.refresh_token,
-  })
+  });
 
   const subcriptionStatus = await fitbit.getSubscriptions();
 
@@ -41,7 +36,7 @@ usersRouter.get("/:email", async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     logger.error(error);
-    return res.sendStatus(500)
+    return res.sendStatus(500);
   }
 });
 
